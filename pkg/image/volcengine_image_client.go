@@ -56,7 +56,7 @@ func NewVolcEngineImageClient(baseURL, apiKey, model, endpoint, queryEndpoint st
 		Endpoint:      endpoint,
 		QueryEndpoint: queryEndpoint,
 		HTTPClient: &http.Client{
-			Timeout: 10 * time.Minute,
+			Timeout: 20 * time.Minute,
 		},
 	}
 }

@@ -25,7 +25,7 @@
             </div>
             <div class="scene-desc">{{ shot.action }}</div>
           </div>
-          <div class="scene-thumb" v-if="shot.background_url">
+          <div v-if="shot.background_url" class="scene-thumb">
             <el-image :src="shot.background_url" fit="cover" />
           </div>
         </div>
@@ -41,7 +41,7 @@
         </div>
         <div class="header-actions">
           <el-button-group>
-            <el-button :icon="VideoPlay" size="small" v-if="currentShot?.video_url">预览</el-button>
+            <el-button v-if="currentShot?.video_url" :icon="VideoPlay" size="small">预览</el-button>
             <el-button :icon="Refresh" size="small" @click="handleRegenerateShot">重新生成</el-button>
             <el-button :icon="Download" size="small">导出</el-button>
           </el-button-group>
@@ -113,7 +113,7 @@
     <div class="right-panel">
       <el-tabs v-model="activeTab" class="panel-tabs">
         <el-tab-pane label="基础信息" name="info">
-          <div class="param-section" v-if="currentShot">
+          <div v-if="currentShot" class="param-section">
             <div class="param-group">
               <label>镜号</label>
               <el-input :model-value="currentShot.storyboard_number" disabled size="small" />
@@ -221,7 +221,7 @@
         </el-tab-pane>
 
         <el-tab-pane label="场景制作" name="scene">
-          <div class="param-section" v-if="currentShot">
+          <div v-if="currentShot" class="param-section">
             <!-- 人物选择 -->
             <div class="section-title">人物设置</div>
             <div class="param-group">
@@ -269,7 +269,7 @@
             <div class="param-group">
               <label>背景图片</label>
               <div class="background-compact">
-                <div class="background-preview-small" v-if="currentShot.background_url">
+                <div v-if="currentShot.background_url" class="background-preview-small">
                   <el-image :src="currentShot.background_url" fit="cover" />
                 </div>
                 <div v-else class="background-placeholder-small">
@@ -325,7 +325,7 @@
               </div>
             </div>
             
-            <div class="param-group" v-if="!currentShot.background_url">
+            <div v-if="!currentShot.background_url" class="param-group">
               <el-alert
                 title="请先生成背景图"
                 type="warning"
@@ -333,7 +333,7 @@
                 show-icon
               />
             </div>
-            <div class="param-group" v-else-if="selectedCharacters.length === 0">
+            <div v-else-if="selectedCharacters.length === 0" class="param-group">
               <el-alert
                 title="请先选择场景角色"
                 type="warning"
@@ -348,8 +348,8 @@
                 :icon="MagicStick"
                 :loading="generating"
                 :disabled="!currentShot.background_url || selectedCharacters.length === 0"
-                @click="handleComposeScene"
                 block
+                @click="handleComposeScene"
               >
                 合成场景
               </el-button>
@@ -358,10 +358,10 @@
         </el-tab-pane>
 
         <el-tab-pane label="视频生成" name="video">
-          <div class="param-section" v-if="currentShot">
+          <div v-if="currentShot" class="param-section">
             <div class="param-group">
               <label>视频预览</label>
-              <div class="video-preview" v-if="currentShot.video_url" @click="toggleVideoPlay">
+              <div v-if="currentShot.video_url" class="video-preview" @click="toggleVideoPlay">
                 <video ref="videoPlayerRef" :src="currentShot.video_url" style="width: 100%;" @ended="videoPlaying = false" />
                 <div class="video-play-overlay" :class="{ hidden: videoPlaying }">
                   <el-icon :size="48"><VideoPlay /></el-icon>
@@ -373,7 +373,7 @@
               </div>
             </div>
             
-            <div class="param-group" v-if="!currentShot.background_url">
+            <div v-if="!currentShot.background_url" class="param-group">
               <el-alert
                 title="请先生成背景图"
                 type="warning"
@@ -381,7 +381,7 @@
                 show-icon
               />
             </div>
-            <div class="param-group" v-else-if="selectedCharacters.length === 0">
+            <div v-else-if="selectedCharacters.length === 0" class="param-group">
               <el-alert
                 title="建议选择场景角色以生成更完整的视频"
                 type="info"
@@ -444,8 +444,10 @@ interface Storyboard {
   atmosphere?: string
   dialogue?: string
   duration?: number
+  background_id?: string | number
   background_url?: string
   video_url?: string
+  composed_url?: string
   scene_id?: string | number
   title?: string
   bgm_prompt?: string
@@ -757,7 +759,8 @@ const handleGenerateVideo = async () => {
     ElMessage.info('正在生成视频...')
     
     await videoAPI.generateVideo({
-      scene_id: parseInt(currentShot.value.id),
+      drama_id: props.dramaId || '',
+      scene_id: currentShot.value.id,
       prompt: currentShot.value.action
     })
     
@@ -777,7 +780,7 @@ const handleUploadBackground = () => {
 }
 
 const getCharacterById = (id: string) => {
-  return availableCharacters.value.find(c => c.id === id)
+  return availableCharacters.value.find(c => String(c.id) === id)
 }
 
 const handleComposeScene = async () => {
@@ -788,7 +791,7 @@ const handleComposeScene = async () => {
     return
   }
   
-  if (selectedCharacters.length === 0) {
+  if (selectedCharacters.value.length === 0) {
     ElMessage.warning('请先选择场景角色')
     return
   }

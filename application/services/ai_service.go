@@ -3,6 +3,9 @@ package services
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
 
 	"github.com/drama-generator/backend/domain/models"
 	"github.com/drama-generator/backend/pkg/ai"
@@ -27,8 +30,8 @@ type CreateAIConfigRequest struct {
 	Name          string            `json:"name" binding:"required,min=1,max=100"`
 	Provider      string            `json:"provider" binding:"required"`
 	BaseURL       string            `json:"base_url" binding:"required,url"`
-	APIKey        string            `json:"api_key" binding:"required"`
-	Model         models.ModelField `json:"model" binding:"required"`
+	APIKey        string            `json:"api_key"`
+	Model         models.ModelField `json:"model"`
 	Endpoint      string            `json:"endpoint"`
 	QueryEndpoint string            `json:"query_endpoint"`
 	Priority      int               `json:"priority"`
@@ -52,13 +55,19 @@ type UpdateAIConfigRequest struct {
 
 type TestConnectionRequest struct {
 	BaseURL  string            `json:"base_url" binding:"required,url"`
-	APIKey   string            `json:"api_key" binding:"required"`
-	Model    models.ModelField `json:"model" binding:"required"`
+	APIKey   string            `json:"api_key"`
+	Model    models.ModelField `json:"model"`
 	Provider string            `json:"provider"`
 	Endpoint string            `json:"endpoint"`
 }
 
 func (s *AIService) CreateConfig(req *CreateAIConfigRequest) (*models.AIServiceConfig, error) {
+	if req.Provider != "comfyui" && strings.TrimSpace(req.APIKey) == "" {
+		return nil, fmt.Errorf("api_key is required for provider %s", req.Provider)
+	}
+	if req.Provider != "comfyui" && len(req.Model) == 0 {
+		return nil, fmt.Errorf("model is required for provider %s", req.Provider)
+	}
 	// 根据 provider 和 service_type 自动设置 endpoint
 	endpoint := req.Endpoint
 	queryEndpoint := req.QueryEndpoint
@@ -98,6 +107,13 @@ func (s *AIService) CreateConfig(req *CreateAIConfigRequest) (*models.AIServiceC
 				endpoint = "/contents/generations/tasks"
 				if queryEndpoint == "" {
 					queryEndpoint = "/generations/tasks/{taskId}"
+				}
+			}
+		case "comfyui":
+			if req.ServiceType == "image" || req.ServiceType == "video" {
+				endpoint = "/prompt"
+				if queryEndpoint == "" {
+					queryEndpoint = "/history/{taskId}"
 				}
 			}
 		default:
@@ -224,6 +240,11 @@ func (s *AIService) UpdateConfig(configID uint, req *UpdateAIConfigRequest) (*mo
 				updates["endpoint"] = "/video/generations"
 				updates["query_endpoint"] = "/video/task/{taskId}"
 			}
+		case "comfyui":
+			if serviceType == "image" || serviceType == "video" {
+				updates["endpoint"] = "/prompt"
+				updates["query_endpoint"] = "/history/{taskId}"
+			}
 		}
 	} else if req.Endpoint != "" {
 		updates["endpoint"] = req.Endpoint
@@ -269,6 +290,23 @@ func (s *AIService) DeleteConfig(configID uint) error {
 
 func (s *AIService) TestConnection(req *TestConnectionRequest) error {
 	s.log.Infow("TestConnection called", "baseURL", req.BaseURL, "provider", req.Provider, "endpoint", req.Endpoint, "modelCount", len(req.Model))
+	if req.Provider == "comfyui" {
+		endpoint := strings.TrimRight(req.BaseURL, "/") + "/system_stats"
+		httpClient := &http.Client{Timeout: 15 * time.Second}
+		resp, err := httpClient.Get(endpoint)
+		if err != nil {
+			s.log.Errorw("ComfyUI test connection failed", "error", err, "endpoint", endpoint)
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return fmt.Errorf("comfyui test failed with status %d", resp.StatusCode)
+		}
+		return nil
+	}
+	if strings.TrimSpace(req.APIKey) == "" {
+		return fmt.Errorf("api_key is required")
+	}
 
 	// 使用第一个模型进行测试
 	model := ""

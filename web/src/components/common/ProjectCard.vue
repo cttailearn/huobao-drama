@@ -3,8 +3,8 @@
   <!-- 项目卡片组件 - 紧凑设计，悬停显示操作 -->
   <article 
     class="project-card"
-    @click="$emit('click')"
     tabindex="0"
+    @click="$emit('click')"
     @keydown.enter="$emit('click')"
   >
     <!-- Gradient header with icon / 渐变头部区域 -->

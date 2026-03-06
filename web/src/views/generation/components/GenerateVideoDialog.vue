@@ -6,7 +6,7 @@
     :close-on-click-modal="false"
     @close="handleClose"
   >
-    <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
       <el-form-item label="选择剧本" prop="drama_id">
         <el-select v-model="form.drama_id" placeholder="选择剧本" @change="onDramaChange">
           <el-option
@@ -111,7 +111,7 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="风格" v-if="form.provider === 'doubao'">
+          <el-form-item v-if="form.provider === 'doubao'" label="风格">
             <el-input v-model="form.style" placeholder="例如：电影级、动画风格" />
           </el-form-item>
 

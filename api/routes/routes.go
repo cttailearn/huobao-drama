@@ -55,6 +55,7 @@ func SetupRouter(cfg *config.Config, db *gorm.DB, log *logger.Logger, localStora
 	audioExtractionHandler := handlers2.NewAudioExtractionHandler(log, cfg.Storage.LocalPath)
 	settingsHandler := handlers2.NewSettingsHandler(cfg, log)
 	propHandler := handlers2.NewPropHandler(db, cfg, log, aiService, imageGenService)
+	novelHandler := handlers2.NewNovelHandler(db, cfg, log)
 
 	api := r.Group("/api/v1")
 	{
@@ -90,6 +91,22 @@ func SetupRouter(cfg *config.Config, db *gorm.DB, log *logger.Logger, localStora
 		generation := api.Group("/generation")
 		{
 			generation.POST("/characters", scriptGenHandler.GenerateCharacters)
+		}
+
+		novels := api.Group("/novels")
+		{
+			novels.GET("", novelHandler.ListNovels)
+			novels.POST("", novelHandler.CreateNovel)
+			novels.GET("/:id", novelHandler.GetNovel)
+			novels.PUT("/:id/content", novelHandler.UpdateNovelContent)
+			novels.PUT("/:id/chapters/:chapter_number/content", novelHandler.UpdateChapterContent)
+			novels.POST("/:id/generate/setup", novelHandler.GenerateSetup)
+			novels.POST("/:id/generate/outline", novelHandler.GenerateOutline)
+			novels.POST("/:id/chapters/:chapter_number/generate-draft", novelHandler.GenerateDraft)
+			novels.POST("/:id/chapters/:chapter_number/finalize", novelHandler.FinalizeChapter)
+			novels.POST("/:id/generate/all", novelHandler.GenerateAll)
+			novels.POST("/:id/apply/dramas/:drama_id", novelHandler.ApplyToDrama)
+			novels.GET("/:id/export/txt", novelHandler.ExportTXT)
 		}
 
 		// 角色库路由

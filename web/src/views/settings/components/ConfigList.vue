@@ -15,10 +15,10 @@
           <el-tag v-else type="info" size="small">{{ $t('aiConfig.disabled') }}</el-tag>
         </div>
         <div class="config-actions">
-          <el-button v-if="showTestButton" text @click="$emit('test', config)" :icon="Connection">
+          <el-button v-if="showTestButton" text :icon="Connection" @click="$emit('test', config)">
             {{ $t('aiConfig.actions.test') }}
           </el-button>
-          <el-button text @click="$emit('edit', config)" :icon="Edit">
+          <el-button text :icon="Edit" @click="$emit('edit', config)">
             {{ $t('common.edit') }}
           </el-button>
           <el-button 
@@ -107,7 +107,7 @@ defineProps<{
 defineEmits<{
   edit: [config: AIServiceConfig]
   delete: [config: AIServiceConfig]
-  toggleActive: [config: AIServiceConfig]
+  'toggle-active': [config: AIServiceConfig]
   test: [config: AIServiceConfig]
 }>()
 

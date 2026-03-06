@@ -1,6 +1,6 @@
 <template>
   <div class="drama-settings-container">
-    <el-page-header @back="goBack" title="返回项目">
+    <el-page-header title="返回项目" @back="goBack">
       <template #content>
         <h2>项目设置</h2>
       </template>

@@ -20,8 +20,8 @@
       <div class="tabs-wrapper">
         <el-tabs
           v-model="activeTab"
-          @tab-change="handleTabChange"
           class="config-tabs"
+          @tab-change="handleTabChange"
         >
           <el-tab-pane :label="$t('aiConfig.tabs.text')" name="text">
             <ConfigList
@@ -78,8 +78,8 @@
             <el-select
               v-model="form.provider"
               :placeholder="$t('aiConfig.form.providerPlaceholder')"
-              @change="handleProviderChange"
               style="width: 100%"
+              @change="handleProviderChange"
             >
               <el-option
                 v-for="provider in availableProviders"
@@ -158,11 +158,11 @@
           }}</el-button>
           <el-button
             v-if="form.service_type === 'text'"
-            @click="testConnection"
             :loading="testing"
+            @click="testConnection"
             >{{ $t("aiConfig.actions.test") }}</el-button
           >
-          <el-button type="primary" @click="handleSubmit" :loading="submitting">
+          <el-button type="primary" :loading="submitting" @click="handleSubmit">
             {{ isEdit ? $t("common.save") : $t("common.create") }}
           </el-button>
         </template>
@@ -324,7 +324,8 @@ const availableModels = computed(() => {
   // 提取所有模型，去重
   const models = new Set<string>();
   activeConfigsForProvider.forEach((config) => {
-    config.model.forEach((m) => models.add(m));
+    const modelList = Array.isArray(config.model) ? config.model : [config.model];
+    modelList.forEach((m) => models.add(m));
   });
 
   return Array.from(models);
@@ -376,13 +377,30 @@ const rules: FormRules = {
     { required: true, message: "请输入 Base URL", trigger: "blur" },
     { type: "url", message: "请输入正确的 URL 格式", trigger: "blur" },
   ],
-  api_key: [{ required: true, message: "请输入 API Key", trigger: "blur" }],
+  api_key: [
+    {
+      validator: (_rule, value, callback) => {
+        if (form.provider === "comfyui") {
+          callback();
+          return;
+        }
+        if (!value || !String(value).trim()) {
+          callback(new Error("请输入 API Key"));
+          return;
+        }
+        callback();
+      },
+      trigger: "blur",
+    },
+  ],
   model: [
     {
-      required: true,
-      message: "请至少选择一个模型",
       trigger: "change",
-      validator: (rule: any, value: any, callback: any) => {
+      validator: (_rule: any, value: any, callback: any) => {
+        if (form.provider === "comfyui") {
+          callback();
+          return;
+        }
         if (Array.isArray(value) && value.length > 0) {
           callback();
         } else if (typeof value === "string" && value.length > 0) {

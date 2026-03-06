@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	models "github.com/drama-generator/backend/domain/models"
@@ -535,17 +536,7 @@ func (s *CharacterLibraryService) processCharacterExtraction(taskID string, epis
 	}
 
 	prompt := s.promptI18n.GetCharacterExtractionPrompt(drama.Style)
-	userPrompt := fmt.Sprintf("【剧本内容】\n%s", script)
-
-	response, err := s.aiService.GenerateText(userPrompt, prompt, ai.WithMaxTokens(3000))
-	if err != nil {
-		s.taskService.UpdateTaskError(taskID, err)
-		return
-	}
-
-	s.taskService.UpdateTaskStatus(taskID, "processing", 50, "正在整理角色数据...")
-
-	var extractedCharacters []struct {
+	type extractedCharacter struct {
 		Name        string `json:"name"`
 		Role        string `json:"role"`
 		Appearance  string `json:"appearance"`
@@ -553,14 +544,82 @@ func (s *CharacterLibraryService) processCharacterExtraction(taskID string, epis
 		Description string `json:"description"`
 	}
 
-	if err := utils.SafeParseAIJSON(response, &extractedCharacters); err != nil {
-		s.log.Errorw("Failed to parse AI response for characters", "error", err, "response", response)
-		s.taskService.UpdateTaskError(taskID, fmt.Errorf("解析AI响应失败"))
+	parseCharacters := func(text string) ([]extractedCharacter, error) {
+		var arr []extractedCharacter
+		if err := utils.SafeParseAIJSON(text, &arr); err == nil {
+			return arr, nil
+		}
+		var obj struct {
+			Characters []extractedCharacter `json:"characters"`
+		}
+		if err := utils.SafeParseAIJSON(text, &obj); err != nil {
+			return nil, err
+		}
+		return obj.Characters, nil
+	}
+
+	chunkOpts := utils.TextChunkOptions{
+		MaxChars:     s.config.Extraction.LongTextChunkChars,
+		OverlapChars: s.config.Extraction.LongTextOverlapChars,
+		MinChars:     s.config.Extraction.LongTextMinChunkChars,
+		MaxChunks:    s.config.Extraction.LongTextMaxChunks,
+	}
+	chunks := utils.SplitLongText(script, chunkOpts)
+	if len(chunks) == 0 {
+		s.taskService.UpdateTaskError(taskID, fmt.Errorf("剧本内容为空"))
 		return
 	}
 
+	collected := make(map[string]extractedCharacter)
+	for _, ch := range chunks {
+		userPrompt := fmt.Sprintf("【剧本分段 %d/%d】\n%s", ch.Index, ch.Total, ch.Text)
+		response, err := s.aiService.GenerateText(userPrompt, prompt, ai.WithMaxTokens(3000))
+		if err != nil {
+			s.taskService.UpdateTaskError(taskID, err)
+			return
+		}
+
+		parsed, err := parseCharacters(response)
+		if err != nil {
+			s.log.Errorw("Failed to parse AI response for characters", "error", err, "response", response)
+			s.taskService.UpdateTaskError(taskID, fmt.Errorf("解析AI响应失败"))
+			return
+		}
+
+		for _, c := range parsed {
+			name := strings.TrimSpace(c.Name)
+			if name == "" {
+				continue
+			}
+			if existing, ok := collected[name]; ok {
+				existing.Name = name
+				if strings.TrimSpace(existing.Appearance) == "" && strings.TrimSpace(c.Appearance) != "" {
+					existing.Appearance = c.Appearance
+				}
+				if strings.TrimSpace(existing.Personality) == "" && strings.TrimSpace(c.Personality) != "" {
+					existing.Personality = c.Personality
+				}
+				if strings.TrimSpace(existing.Description) == "" && strings.TrimSpace(c.Description) != "" {
+					existing.Description = c.Description
+				}
+				if strings.TrimSpace(existing.Role) == "" && strings.TrimSpace(c.Role) != "" {
+					existing.Role = c.Role
+				}
+				collected[name] = existing
+			} else {
+				c.Name = name
+				collected[name] = c
+			}
+		}
+
+		progress := 5 + int(float64(ch.Index)/float64(ch.Total)*45)
+		s.taskService.UpdateTaskStatus(taskID, "processing", progress, fmt.Sprintf("正在分析剧本... (%d/%d)", ch.Index, ch.Total))
+	}
+
+	s.taskService.UpdateTaskStatus(taskID, "processing", 50, "正在整理角色数据...")
+
 	var savedCharacters []models.Character
-	for _, charData := range extractedCharacters {
+	for _, charData := range collected {
 		// 检查是否已存在同名角色
 		var existingCharacter models.Character
 		err := s.db.Where("drama_id = ? AND name = ?", episode.DramaID, charData.Name).First(&existingCharacter).Error

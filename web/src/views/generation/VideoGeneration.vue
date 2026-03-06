@@ -1,6 +1,6 @@
 <template>
   <div class="video-generation-container">
-    <el-page-header @back="goBack" class="page-header">
+    <el-page-header class="page-header" @back="goBack">
       <template #content>
         <div class="header-content">
           <h2>{{ $t('video.title') }}</h2>
@@ -42,7 +42,7 @@
       </el-form>
     </el-card>
 
-    <el-row :gutter="16" v-loading="loading">
+    <el-row v-loading="loading" :gutter="16">
       <el-col
         v-for="video in videos"
         :key="video.id"
@@ -144,9 +144,9 @@
       :total="total"
       :page-sizes="[12, 24, 36, 48]"
       layout="total, sizes, prev, pager, next, jumper"
+      class="pagination"
       @current-change="loadVideos"
       @size-change="loadVideos"
-      class="pagination"
     />
 
     <GenerateVideoDialog
@@ -187,7 +187,7 @@ const total = ref(0)
 const showGenerateDialog = ref(false)
 const showDetailDialog = ref(false)
 const selectedVideo = ref<VideoGeneration>()
-let pollInterval: number | null = null
+let pollInterval: ReturnType<typeof setInterval> | null = null
 
 const filters = reactive({
   drama_id: undefined as string | undefined,

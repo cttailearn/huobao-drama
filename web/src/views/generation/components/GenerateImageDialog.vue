@@ -6,7 +6,7 @@
     :close-on-click-modal="false"
     @close="handleClose"
   >
-    <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
       <el-form-item :label="$t('imageDialog.selectDrama')" prop="drama_id">
         <el-select v-model="form.drama_id" :placeholder="$t('imageDialog.selectDrama')" @change="onDramaChange">
           <el-option
@@ -71,14 +71,14 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item :label="$t('imageDialog.imageQuality')" v-if="form.provider === 'openai'">
+      <el-form-item v-if="form.provider === 'openai'" :label="$t('imageDialog.imageQuality')">
         <el-radio-group v-model="form.quality">
           <el-radio label="standard">{{ $t('imageDialog.standard') }}</el-radio>
           <el-radio label="hd">{{ $t('imageDialog.hd') }}</el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item :label="$t('imageDialog.style')" v-if="form.provider === 'openai'">
+      <el-form-item v-if="form.provider === 'openai'" :label="$t('imageDialog.style')">
         <el-radio-group v-model="form.style">
           <el-radio label="vivid">{{ $t('imageDialog.vivid') }}</el-radio>
           <el-radio label="natural">{{ $t('imageDialog.natural') }}</el-radio>

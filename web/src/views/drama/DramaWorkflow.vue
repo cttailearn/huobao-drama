@@ -2,7 +2,7 @@
   <div class="workflow-container">
     <AppHeader :fixed="false" :show-logo="false">
       <template #left>
-        <el-button text @click="goBack" class="back-btn">
+        <el-button text class="back-btn" @click="goBack">
           <el-icon><ArrowLeft /></el-icon>
           <span>{{ $t("dramaWorkflow.returnToList") }}</span>
         </el-button>
@@ -67,8 +67,8 @@
               <el-button
                 type="primary"
                 size="large"
-                @click="startCreateChapter"
                 :icon="Document"
+                @click="startCreateChapter"
               >
                 {{
                   $t("dramaWorkflow.createChapter", {
@@ -85,8 +85,8 @@
               <el-button
                 type="primary"
                 :icon="MagicStick"
-                @click="generateScriptByAI"
                 :loading="generatingScript"
+                @click="generateScriptByAI"
               >
                 {{ generatingScript ? "AI生成中..." : "随机生成" }}
               </el-button>
@@ -104,8 +104,8 @@
               <el-button
                 type="primary"
                 size="default"
-                @click="saveChapterScript"
                 :disabled="!scriptContent.trim() || generatingScript"
+                @click="saveChapterScript"
               >
                 <el-icon><Check /></el-icon>
                 <span>保存章节</span>
@@ -175,9 +175,9 @@
               <h3>镜头列表</h3>
               <el-button
                 type="primary"
-                @click="parseShotsToCharacters"
                 :loading="parsingCharacters"
                 :icon="User"
+                @click="parseShotsToCharacters"
               >
                 解析角色
               </el-button>
@@ -214,13 +214,13 @@
             </el-table>
 
             <div class="action-buttons" style="margin-top: 24px">
-              <el-button @click="regenerateShots" :icon="MagicStick">
+              <el-button :icon="MagicStick" @click="regenerateShots">
                 {{ $t("dramaWorkflow.reGenerateShots") }}
               </el-button>
               <el-button
                 type="success"
-                @click="nextStep"
                 :disabled="!hasCharacters"
+                @click="nextStep"
               >
                 {{ $t("dramaWorkflow.nextStepCharacterImages") }}
                 <el-icon><ArrowRight /></el-icon>
@@ -233,9 +233,9 @@
             <el-empty :description="$t('dramaWorkflow.splitStoryboardFirst')">
               <el-button
                 type="primary"
-                @click="generateShots"
                 :loading="generatingShots"
                 :icon="MagicStick"
+                @click="generateShots"
               >
                 {{
                   generatingShots
@@ -259,8 +259,8 @@
             <div class="toolbar-left">
               <el-checkbox
                 v-model="selectAllCharacters"
-                @change="handleSelectAllCharacters"
                 :indeterminate="isCharacterIndeterminate"
+                @change="handleSelectAllCharacters"
               >
                 {{ $t("common.selectAll") }}
               </el-checkbox>
@@ -283,8 +283,8 @@
                 size="small"
                 :disabled="selectedCharacterIds.length === 0"
                 :loading="batchGenerating"
-                @click="batchGenerateCharacterImages"
                 :icon="MagicStick"
+                @click="batchGenerateCharacterImages"
               >
                 {{ $t("dramaWorkflow.batchGenerate") }}({{
                   selectedCharacterIds.length
@@ -293,8 +293,8 @@
               <el-button
                 type="success"
                 size="small"
-                @click="nextStep"
                 :disabled="!allCharactersHaveImages"
+                @click="nextStep"
               >
                 {{ $t("dramaWorkflow.nextStep") }}
                 <el-icon><ArrowRight /></el-icon>
@@ -305,9 +305,9 @@
           <div class="character-cards-area-fullscreen">
             <el-row :gutter="16">
               <el-col
-                :span="4"
                 v-for="character in drama?.characters"
                 :key="character.id"
+                :span="4"
               >
                 <el-card
                   shadow="hover"
@@ -354,8 +354,8 @@
                       size="small"
                       text
                       type="primary"
-                      @click="editCharacterDescription(character)"
                       :icon="Edit"
+                      @click="editCharacterDescription(character)"
                     >
                       编辑描述
                     </el-button>
@@ -369,8 +369,8 @@
                     <el-alert type="error" :closable="false" show-icon>
                       <template #title> 生成失败 </template>
                       <template
-                        #default
                         v-if="character.image_generation_error"
+                        #default
                       >
                         {{ character.image_generation_error }}
                       </template>
@@ -382,8 +382,8 @@
                       type="primary"
                       size="small"
                       :loading="generatingCharacterIds.includes(character.id)"
-                      @click="generateCharacterImage(character)"
                       :icon="MagicStick"
+                      @click="generateCharacterImage(character)"
                     >
                       <span v-if="generatingCharacterIds.includes(character.id)"
                         >生成中...</span
@@ -398,15 +398,15 @@
                     </el-button>
                     <el-button
                       size="small"
-                      @click="openUploadDialog(character)"
                       :icon="UploadFilled"
+                      @click="openUploadDialog(character)"
                     >
                       上传图片
                     </el-button>
                     <el-button
                       size="small"
-                      @click="openCharacterLibrary(character)"
                       :icon="FolderOpened"
+                      @click="openCharacterLibrary(character)"
                     >
                       从角色库选择
                     </el-button>
@@ -415,8 +415,8 @@
                       size="small"
                       type="success"
                       plain
-                      @click="addToCharacterLibrary(character)"
                       :icon="Plus"
+                      @click="addToCharacterLibrary(character)"
                     >
                       添加到角色库
                     </el-button>
@@ -424,8 +424,8 @@
                       size="small"
                       type="danger"
                       plain
-                      @click="deleteCharacter(character)"
                       :icon="Delete"
+                      @click="deleteCharacter(character)"
                     >
                       删除角色
                     </el-button>
@@ -549,8 +549,8 @@
             <el-button
               type="primary"
               size="large"
-              @click="goToEpisodeList"
               class="main-action-btn"
+              @click="goToEpisodeList"
             >
               <el-icon :size="20"><Film /></el-icon>
               <span>进入剧集制作</span>
@@ -605,8 +605,8 @@
         <el-button @click="editDescDialogVisible = false">取消</el-button>
         <el-button
           type="primary"
-          @click="saveCharacterDescription"
           :loading="saving"
+          @click="saveCharacterDescription"
           >保存</el-button
         >
       </template>
@@ -656,7 +656,7 @@
       </el-form>
       <template #footer>
         <el-button @click="addCharacterDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="addCharacter" :loading="saving"
+        <el-button type="primary" :loading="saving" @click="addCharacter"
           >添加</el-button
         >
       </template>
@@ -668,14 +668,14 @@
       title="从角色库选择"
       width="800px"
     >
-      <div class="library-grid" v-if="characterLibrary.length > 0">
+      <div v-if="characterLibrary.length > 0" class="library-grid">
         <el-row :gutter="16">
-          <el-col :span="6" v-for="item in characterLibrary" :key="item.id">
+          <el-col v-for="item in characterLibrary" :key="item.id" :span="6">
             <el-card
               shadow="hover"
               class="library-item"
-              @click="selectFromLibrary(item)"
               :body-style="{ padding: '10px' }"
+              @click="selectFromLibrary(item)"
             >
               <img
                 :src="getImageUrl(item)"

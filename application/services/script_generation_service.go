@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/drama-generator/backend/domain/models"
 	"github.com/drama-generator/backend/pkg/ai"
@@ -86,39 +87,12 @@ func (s *ScriptGenerationService) processCharacterGeneration(taskID string, req 
 		outlineText = s.promptI18n.FormatUserPrompt("drama_info_template", drama.Title, drama.Description, drama.Genre)
 	}
 
-	userPrompt := s.promptI18n.FormatUserPrompt("character_request", outlineText, count)
-
 	temperature := req.Temperature
 	if temperature == 0 {
 		temperature = 0.7
 	}
 
-	// 如果指定了模型，使用指定的模型；否则使用默认配置
-	var text string
-	var err error
-	if req.Model != "" {
-		s.log.Infow("Using specified model for character generation", "model", req.Model, "task_id", taskID)
-		client, getErr := s.aiService.GetAIClientForModel("text", req.Model)
-		if getErr != nil {
-			s.log.Warnw("Failed to get client for specified model, using default", "model", req.Model, "error", getErr, "task_id", taskID)
-			text, err = s.aiService.GenerateText(userPrompt, systemPrompt, ai.WithTemperature(temperature))
-		} else {
-			text, err = client.GenerateText(userPrompt, systemPrompt, ai.WithTemperature(temperature))
-		}
-	} else {
-		text, err = s.aiService.GenerateText(userPrompt, systemPrompt, ai.WithTemperature(temperature))
-	}
-
-	if err != nil {
-		s.log.Errorw("Failed to generate characters", "error", err, "task_id", taskID)
-		s.taskService.UpdateTaskStatus(taskID, "failed", 0, "AI生成失败: "+err.Error())
-		return
-	}
-
-	s.log.Infow("AI response received for character generation", "length", len(text), "preview", text[:minInt(200, len(text))], "task_id", taskID)
-
-	// AI直接返回数组格式
-	var result []struct {
+	type extractedCharacter struct {
 		Name        string `json:"name"`
 		Role        string `json:"role"`
 		Description string `json:"description"`
@@ -127,10 +101,113 @@ func (s *ScriptGenerationService) processCharacterGeneration(taskID string, req 
 		VoiceStyle  string `json:"voice_style"`
 	}
 
-	if err := utils.SafeParseAIJSON(text, &result); err != nil {
-		s.log.Errorw("Failed to parse characters JSON", "error", err, "raw_response", text[:minInt(500, len(text))], "task_id", taskID)
-		s.taskService.UpdateTaskStatus(taskID, "failed", 0, "解析AI返回结果失败")
+	parseCharacters := func(text string) ([]extractedCharacter, error) {
+		var arr []extractedCharacter
+		if err := utils.SafeParseAIJSON(text, &arr); err == nil {
+			return arr, nil
+		}
+		var obj struct {
+			Characters []extractedCharacter `json:"characters"`
+		}
+		if err := utils.SafeParseAIJSON(text, &obj); err != nil {
+			return nil, err
+		}
+		return obj.Characters, nil
+	}
+
+	callModel := func(userPrompt string) (string, error) {
+		if req.Model == "" {
+			return s.aiService.GenerateText(userPrompt, systemPrompt, ai.WithTemperature(temperature))
+		}
+		s.log.Infow("Using specified model for character generation", "model", req.Model, "task_id", taskID)
+		client, getErr := s.aiService.GetAIClientForModel("text", req.Model)
+		if getErr != nil {
+			s.log.Warnw("Failed to get client for specified model, using default", "model", req.Model, "error", getErr, "task_id", taskID)
+			return s.aiService.GenerateText(userPrompt, systemPrompt, ai.WithTemperature(temperature))
+		}
+		return client.GenerateText(userPrompt, systemPrompt, ai.WithTemperature(temperature))
+	}
+
+	chunkOpts := utils.TextChunkOptions{
+		MaxChars:     s.config.Extraction.LongTextChunkChars,
+		OverlapChars: s.config.Extraction.LongTextOverlapChars,
+		MinChars:     s.config.Extraction.LongTextMinChunkChars,
+		MaxChunks:    s.config.Extraction.LongTextMaxChunks,
+	}
+	chunks := utils.SplitLongText(outlineText, chunkOpts)
+	if len(chunks) == 0 {
+		s.taskService.UpdateTaskStatus(taskID, "failed", 0, "剧本内容为空")
 		return
+	}
+
+	collected := make(map[string]extractedCharacter)
+	for _, ch := range chunks {
+		var userPrompt string
+		if s.promptI18n.IsEnglish() {
+			userPrompt = fmt.Sprintf("Script excerpt (part %d/%d):\n%s", ch.Index, ch.Total, ch.Text)
+		} else {
+			userPrompt = fmt.Sprintf("【剧本分段 %d/%d】\n%s", ch.Index, ch.Total, ch.Text)
+		}
+
+		text, err := callModel(userPrompt)
+		if err != nil {
+			s.log.Errorw("Failed to generate characters", "error", err, "task_id", taskID, "chunk", ch.Index, "chunks", ch.Total)
+			s.taskService.UpdateTaskStatus(taskID, "failed", 0, "AI生成失败: "+err.Error())
+			return
+		}
+
+		s.log.Infow("AI response received for character generation",
+			"task_id", taskID,
+			"chunk", ch.Index,
+			"chunks", ch.Total,
+			"length", len(text),
+			"preview", text[:minInt(200, len(text))])
+
+		parsed, err := parseCharacters(text)
+		if err != nil {
+			s.log.Errorw("Failed to parse characters JSON", "error", err, "task_id", taskID, "chunk", ch.Index, "raw_response", text[:minInt(500, len(text))])
+			s.taskService.UpdateTaskStatus(taskID, "failed", 0, "解析AI返回结果失败")
+			return
+		}
+
+		for _, c := range parsed {
+			name := strings.TrimSpace(c.Name)
+			if name == "" {
+				continue
+			}
+			if existing, ok := collected[name]; ok {
+				existing.Name = name
+				if strings.TrimSpace(existing.Appearance) == "" && strings.TrimSpace(c.Appearance) != "" {
+					existing.Appearance = c.Appearance
+				}
+				if strings.TrimSpace(existing.Personality) == "" && strings.TrimSpace(c.Personality) != "" {
+					existing.Personality = c.Personality
+				}
+				if strings.TrimSpace(existing.Description) == "" && strings.TrimSpace(c.Description) != "" {
+					existing.Description = c.Description
+				}
+				if strings.TrimSpace(existing.Role) == "" && strings.TrimSpace(c.Role) != "" {
+					existing.Role = c.Role
+				}
+				if strings.TrimSpace(existing.VoiceStyle) == "" && strings.TrimSpace(c.VoiceStyle) != "" {
+					existing.VoiceStyle = c.VoiceStyle
+				}
+				collected[name] = existing
+			} else {
+				c.Name = name
+				collected[name] = c
+			}
+		}
+
+		progress := 5 + int(float64(ch.Index)/float64(ch.Total)*45)
+		s.taskService.UpdateTaskStatus(taskID, "processing", progress, fmt.Sprintf("正在生成角色... (%d/%d)", ch.Index, ch.Total))
+	}
+
+	result := make([]extractedCharacter, 0, len(collected))
+	for _, c := range collected {
+		if strings.TrimSpace(c.Name) != "" {
+			result = append(result, c)
+		}
 	}
 
 	var characters []models.Character

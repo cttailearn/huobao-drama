@@ -1,6 +1,8 @@
+import type { ID } from './drama'
+
 export interface GenerateCharactersRequest {
-  drama_id: string
-  episode_id?: number
+  drama_id: ID
+  episode_id?: ID
   outline?: string
   count?: number
   temperature?: number
@@ -8,7 +10,7 @@ export interface GenerateCharactersRequest {
 }
 
 export interface ParseScriptRequest {
-  drama_id: string
+  drama_id: ID
   script_content: string
   auto_split?: boolean
 }
@@ -27,11 +29,13 @@ export interface ParsedCharacter {
 }
 
 export interface ParsedEpisode {
+  id?: ID
   episode_number: number
   title: string
   description: string
   script_content: string
   duration: number
+  scenes?: any[]
   chapter_start?: number
   chapter_end?: number
   start_marker?: string

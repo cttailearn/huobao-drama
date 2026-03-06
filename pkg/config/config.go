@@ -7,11 +7,12 @@ import (
 )
 
 type Config struct {
-	App      AppConfig      `mapstructure:"app"`
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Storage  StorageConfig  `mapstructure:"storage"`
-	AI       AIConfig       `mapstructure:"ai"`
+	App        AppConfig        `mapstructure:"app"`
+	Server     ServerConfig     `mapstructure:"server"`
+	Database   DatabaseConfig   `mapstructure:"database"`
+	Storage    StorageConfig    `mapstructure:"storage"`
+	AI         AIConfig         `mapstructure:"ai"`
+	Extraction ExtractionConfig `mapstructure:"extraction"`
 }
 
 type AppConfig struct {
@@ -52,6 +53,13 @@ type AIConfig struct {
 	DefaultTextProvider  string `mapstructure:"default_text_provider"`
 	DefaultImageProvider string `mapstructure:"default_image_provider"`
 	DefaultVideoProvider string `mapstructure:"default_video_provider"`
+}
+
+type ExtractionConfig struct {
+	LongTextChunkChars    int `mapstructure:"long_text_chunk_chars"`
+	LongTextOverlapChars  int `mapstructure:"long_text_overlap_chars"`
+	LongTextMinChunkChars int `mapstructure:"long_text_min_chunk_chars"`
+	LongTextMaxChunks     int `mapstructure:"long_text_max_chunks"`
 }
 
 func LoadConfig() (*Config, error) {

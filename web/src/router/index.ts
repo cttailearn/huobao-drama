@@ -18,6 +18,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/drama/DramaManagement.vue')
   },
   {
+    path: '/dramas/:id/workbench',
+    name: 'ProjectWorkbench',
+    component: () => import('../views/drama/ProjectWorkbench.vue')
+  },
+  {
     path: '/dramas/:id/episode/:episodeNumber',
     name: 'EpisodeWorkflowNew',
     component: () => import('../views/drama/EpisodeWorkflow.vue')
@@ -66,6 +71,16 @@ const routes: RouteRecordRaw[] = [
     path: '/settings/ai-config',
     name: 'AIConfig',
     component: () => import('../views/settings/AIConfig.vue')
+  },
+  {
+    path: '/novels',
+    name: 'NovelStudio',
+    component: () => import('../views/novel/NovelStudio.vue')
+  },
+  {
+    path: '/dramas/:id/novels',
+    name: 'DramaNovelStudio',
+    component: () => import('../views/novel/NovelStudio.vue')
   }
 ]
 

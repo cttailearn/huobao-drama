@@ -7,8 +7,8 @@
       `variant-${variant}`,
       { 'is-hoverable': hoverable, 'is-clickable': clickable }
     ]"
-    @click="clickable ? $emit('click') : undefined"
     :tabindex="clickable ? 0 : undefined"
+    @click="clickable ? $emit('click') : undefined"
     @keydown.enter="clickable ? $emit('click') : undefined"
   >
     <!-- Card Header / 卡片头部 -->

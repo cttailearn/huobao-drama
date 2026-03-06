@@ -5,7 +5,7 @@
         <!-- Left section: Logo + Left slot -->
         <div class="header-left">
           <router-link v-if="showLogo" to="/" class="logo">
-            <span class="logo-text">🎬 HuoBao Drama</span>
+            <span class="logo-text">🎬 星月 Studio</span>
           </router-link>
           <!-- Left slot for business content | 左侧插槽用于业务内容 -->
           <slot name="left" />
@@ -26,7 +26,7 @@
           <ThemeToggle v-if="showTheme" />
           
           <!-- AI Config (Model Switch) | AI 配置（模型切换） -->
-          <el-button v-if="showAIConfig" @click="handleOpenAIConfig" class="header-btn">
+          <el-button v-if="showAIConfig" class="header-btn" @click="handleOpenAIConfig">
             <el-icon><Setting /></el-icon>
             <span class="btn-text">{{ $t('drama.aiConfig') }}</span>
           </el-button>

@@ -1,8 +1,10 @@
+import type { ID } from './drama'
+
 export interface VideoGeneration {
   id: number
-  storyboard_id?: number
-  scene_id?: string  // 已废弃，保留用于兼容
-  drama_id: string
+  storyboard_id?: ID
+  scene_id?: ID // 已废弃，保留用于兼容
+  drama_id: ID
   image_gen_id?: number
   provider: string
   prompt: string
@@ -34,9 +36,9 @@ export type VideoStatus = 'pending' | 'processing' | 'completed' | 'failed'
 export type VideoProvider = 'runway' | 'pika' | 'doubao' | 'openai'
 
 export interface GenerateVideoRequest {
-  storyboard_id?: number
-  scene_id?: string  // 已废弃，保留用于兼容
-  drama_id: string
+  storyboard_id?: ID
+  scene_id?: ID // 已废弃，保留用于兼容
+  drama_id: ID
   image_gen_id?: number
   image_url?: string
   prompt: string
@@ -56,9 +58,9 @@ export interface GenerateVideoRequest {
 }
 
 export interface VideoGenerationListParams {
-  drama_id?: string
-  storyboard_id?: string
-  scene_id?: string  // 已废弃，保留用于兼容
+  drama_id?: ID
+  storyboard_id?: ID
+  scene_id?: ID // 已废弃，保留用于兼容
   status?: string  // 支持单个状态或逗号分隔的多个状态，如 "pending,processing"
   page?: number
   page_size?: number

@@ -1,6 +1,6 @@
 <template>
   <div class="character-extraction-container">
-    <el-page-header @back="goBack" :title="$t('character.backToProject')">
+    <el-page-header :title="$t('character.backToProject')" @back="goBack">
       <template #content>
         <h2>{{ $t('character.title') }}</h2>
       </template>
@@ -15,7 +15,7 @@
               <el-icon><Plus /></el-icon>
               {{ $t('character.add') }}
             </el-button>
-            <el-button type="primary" @click="saveCharacters" :loading="saving">
+            <el-button type="primary" :loading="saving" @click="saveCharacters">
               {{ $t('character.saveChanges') }}
             </el-button>
           </div>
@@ -24,8 +24,8 @@
 
       <el-empty v-if="characters.length === 0" :description="$t('character.empty')" />
 
-      <el-row :gutter="20" v-else>
-        <el-col :span="8" v-for="character in characters" :key="character.id">
+      <el-row v-else :gutter="20">
+        <el-col v-for="character in characters" :key="character.id" :span="8">
           <el-card shadow="hover" class="character-card">
             <template #header>
               <div class="character-header">
@@ -55,7 +55,7 @@
         </el-col>
       </el-row>
 
-      <div class="actions" v-if="characters.length > 0">
+      <div v-if="characters.length > 0" class="actions">
         <el-button type="success" size="large" @click="goToNextStep">
           {{ $t('character.nextStep') }}
         </el-button>

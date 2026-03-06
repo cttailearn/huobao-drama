@@ -160,9 +160,9 @@ const handleSubmit = async () => {
         const drama = await dramaAPI.create(form);
         ElMessage.success("创建成功");
         visible.value = false;
-        emit("created", drama.id);
+        emit("created", String(drama.id));
         // Navigate to drama detail page / 跳转到短剧详情页
-        router.push(`/dramas/${drama.id}`);
+        router.push(`/dramas/${String(drama.id)}`);
       } catch (error: any) {
         ElMessage.error(error.message || "创建失败");
       } finally {

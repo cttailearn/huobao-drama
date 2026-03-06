@@ -3,8 +3,8 @@
     <!-- 缩略图 -->
     <div
       class="thumbnail-container"
-      @click="handlePreview"
       :class="{ 'has-image': hasImage }"
+      @click="handlePreview"
     >
       <img v-if="hasImage" :src="imageUrl" :alt="alt" class="thumbnail-image" />
       <div v-else class="no-image-placeholder">

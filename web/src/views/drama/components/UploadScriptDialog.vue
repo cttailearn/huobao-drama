@@ -45,7 +45,7 @@
           </template>
         </el-alert>
 
-        <div class="summary-box" v-if="parseResult.summary">
+        <div v-if="parseResult.summary" class="summary-box">
           <h4>剧本概要</h4>
           <p>{{ parseResult.summary }}</p>
         </div>
@@ -80,10 +80,10 @@
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button v-if="!parseResult" type="primary" @click="handleParse" :loading="parsing">
+      <el-button v-if="!parseResult" type="primary" :loading="parsing" @click="handleParse">
         解析剧本
       </el-button>
-      <el-button v-else type="success" @click="handleSave" :loading="saving">
+      <el-button v-else type="success" :loading="saving" @click="handleSave">
         保存到项目
       </el-button>
     </template>

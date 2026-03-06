@@ -1,6 +1,6 @@
 <template>
   <el-dialog v-model="visible" :title="$t('editor.gridImageEditor')" width="900px" :close-on-click-modal="false"
-    @close="handleClose" align-center>
+    align-center @close="handleClose">
     <!-- 宫格类型选择 -->
     <div class="grid-type-selector">
       <div class="section-label">{{ $t("editor.gridType") }}</div>
@@ -123,7 +123,7 @@ interface GridImage {
 
 interface ImageGeneration {
   id: number;
-  frame_type: string;
+  frame_type?: string;
   image_url?: string;
   local_path?: string;
   [key: string]: any;
@@ -131,8 +131,8 @@ interface ImageGeneration {
 
 const props = defineProps<{
   modelValue: boolean;
-  storyboardId: number;
-  dramaId: number;
+  storyboardId: string | number;
+  dramaId: string | number;
   allImages: ImageGeneration[];
 }>();
 

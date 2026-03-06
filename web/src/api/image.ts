@@ -10,11 +10,11 @@ export const imageAPI = {
     return request.post<ImageGeneration>('/images', data)
   },
 
-  generateForScene(sceneId: number) {
+  generateForScene(sceneId: string | number) {
     return request.post<ImageGeneration[]>(`/images/scene/${sceneId}`)
   },
 
-  batchGenerateForEpisode(episodeId: number) {
+  batchGenerateForEpisode(episodeId: string | number) {
     return request.post<ImageGeneration[]>(`/images/episode/${episodeId}/batch`)
   },
 
@@ -40,8 +40,8 @@ export const imageAPI = {
 
   // 上传图片并创建图片生成记录
   uploadImage(data: {
-    storyboard_id: number
-    drama_id: number
+    storyboard_id: string | number
+    drama_id: string | number
     frame_type: string
     image_url: string
     prompt?: string

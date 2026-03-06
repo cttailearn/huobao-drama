@@ -53,39 +53,39 @@
                 {{ video.provider }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="模型" v-if="video.model">
+              <el-descriptions-item v-if="video.model" label="模型">
                 {{ video.model }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="时长" v-if="video.duration">
+              <el-descriptions-item v-if="video.duration" label="时长">
                 {{ video.duration }} 秒
               </el-descriptions-item>
 
-              <el-descriptions-item label="宽高比" v-if="video.aspect_ratio">
+              <el-descriptions-item v-if="video.aspect_ratio" label="宽高比">
                 {{ video.aspect_ratio }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="分辨率" v-if="video.width && video.height">
+              <el-descriptions-item v-if="video.width && video.height" label="分辨率">
                 {{ video.width }} × {{ video.height }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="FPS" v-if="video.fps">
+              <el-descriptions-item v-if="video.fps" label="FPS">
                 {{ video.fps }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="运动强度" v-if="video.motion_level !== undefined">
+              <el-descriptions-item v-if="video.motion_level !== undefined" label="运动强度">
                 {{ video.motion_level }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="镜头运动" v-if="video.camera_motion">
+              <el-descriptions-item v-if="video.camera_motion" label="镜头运动">
                 {{ getCameraMotionText(video.camera_motion) }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="风格" v-if="video.style">
+              <el-descriptions-item v-if="video.style" label="风格">
                 {{ video.style }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="随机种子" v-if="video.seed">
+              <el-descriptions-item v-if="video.seed" label="随机种子">
                 {{ video.seed }}
               </el-descriptions-item>
 
@@ -93,7 +93,7 @@
                 {{ formatDateTime(video.created_at) }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="完成时间" v-if="video.completed_at">
+              <el-descriptions-item v-if="video.completed_at" label="完成时间">
                 {{ formatDateTime(video.completed_at) }}
               </el-descriptions-item>
             </el-descriptions>

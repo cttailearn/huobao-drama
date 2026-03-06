@@ -50,35 +50,35 @@
                 {{ image.provider }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="模型" v-if="image.model">
+              <el-descriptions-item v-if="image.model" label="模型">
                 {{ image.model }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="尺寸" v-if="image.size">
+              <el-descriptions-item v-if="image.size" label="尺寸">
                 {{ image.size }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="分辨率" v-if="image.width && image.height">
+              <el-descriptions-item v-if="image.width && image.height" label="分辨率">
                 {{ image.width }} × {{ image.height }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="质量" v-if="image.quality">
+              <el-descriptions-item v-if="image.quality" label="质量">
                 {{ image.quality }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="风格" v-if="image.style">
+              <el-descriptions-item v-if="image.style" label="风格">
                 {{ image.style }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="采样步数" v-if="image.steps">
+              <el-descriptions-item v-if="image.steps" label="采样步数">
                 {{ image.steps }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="CFG Scale" v-if="image.cfg_scale">
+              <el-descriptions-item v-if="image.cfg_scale" label="CFG Scale">
                 {{ image.cfg_scale }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="随机种子" v-if="image.seed">
+              <el-descriptions-item v-if="image.seed" label="随机种子">
                 {{ image.seed }}
               </el-descriptions-item>
 
@@ -86,7 +86,7 @@
                 {{ formatDateTime(image.created_at) }}
               </el-descriptions-item>
 
-              <el-descriptions-item label="完成时间" v-if="image.completed_at">
+              <el-descriptions-item v-if="image.completed_at" label="完成时间">
                 {{ formatDateTime(image.completed_at) }}
               </el-descriptions-item>
             </el-descriptions>

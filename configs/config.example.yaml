@@ -1,5 +1,5 @@
 app:
-  name: "Huobao Drama API"
+  name: "星月 Studio API"
   version: "1.0.0"
   debug: true
   language: "zh" # 系统语言：zh(中文) 或 en(英文)
@@ -27,3 +27,9 @@ ai:
   default_text_provider: "openai"
   default_image_provider: "openai"
   default_video_provider: "doubao"
+
+extraction:
+  long_text_chunk_chars: 6000
+  long_text_overlap_chars: 200
+  long_text_min_chunk_chars: 1200
+  long_text_max_chunks: 12

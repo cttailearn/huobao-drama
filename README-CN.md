@@ -1,8 +1,8 @@
-# 🎬 Huobao Drama - AI 短剧生成平台
+# 🎬 星月 Studio - AI 小说与短剧创作平台
 
 <div align="center">
 
-**基于 Go + Vue3 的全栈 AI 短剧自动化生产平台**
+**基于 Go + Vue3 的全栈 AI 小说 + 短剧自动化创作平台**
 
 [![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://golang.org)
 [![Vue Version](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat&logo=vue.js)](https://vuejs.org)
@@ -18,7 +18,7 @@
 
 ## 📖 项目简介
 
-Huobao Drama 是一个基于 AI 的短剧自动化生产平台，实现从剧本生成、角色设计、分镜制作到视频合成的全流程自动化。
+星月 Studio 是一个基于 AI 的内容创作平台，支持小说生成与短剧制作，实现从小说设定、目录、章节创作到角色设计、分镜制作、视频合成的全流程自动化。
 
 火宝短剧商业版地址：[火宝短剧商业版](https://drama.chatfire.site/shortvideo)
 
@@ -141,7 +141,7 @@ vim configs/config.yaml
 
 ```yaml
 app:
-  name: "Huobao Drama API"
+  name: "星月 Studio API"
   version: "1.0.0"
   debug: true # 开发环境设为true，生产环境设为false
 
@@ -179,6 +179,7 @@ ai:
 - `storage.local_path`: 本地文件存储路径
 - `storage.base_url`: 静态资源访问 URL
 - `ai.default_*_provider`: AI 服务提供商配置（在 Web 界面中配置具体的 API Key）
+- `ComfyUI`: 在图片/视频配置中选择 `comfyui`，Base URL 填 `http://127.0.0.1:8188`，并在 settings 填入 `workflow_json`（可从 JSON 文件导入）与 `api_key_comfy_org`
 
 ### 📥 安装依赖
 
@@ -426,7 +427,7 @@ chmod +x huobao-drama
 
 ```ini
 [Unit]
-Description=Huobao Drama Service
+Description=星月 Studio Service
 After=network.target
 
 [Service]
@@ -635,7 +636,7 @@ A: GORM 会在首次启动时自动创建表，检查日志确认迁移是否成
 
 ## 👨‍💻 关于我们
 
-**AI 火宝 - AI 工作室创业中**
+**AI 星月 - AI 工作室创业中**
 
 - 🏠 **位置**: 中国南京
 - 🚀 **状态**: 创业中
@@ -660,6 +661,6 @@ A: GORM 会在首次启动时自动创建表，检查日志确认迁移是否成
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=chatfire-AI/huobao-drama&type=date&legend=top-left)](https://www.star-history.com/#chatfire-AI/huobao-drama&type=date&legend=top-left)
-Made with ❤️ by Huobao Team
+Made with ❤️ by XingYue Team
 
 </div>

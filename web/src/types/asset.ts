@@ -1,3 +1,5 @@
+import type { ID } from './drama'
+
 export interface Asset {
   id: number
   drama_id?: number
@@ -75,9 +77,9 @@ export interface UpdateAssetRequest {
 }
 
 export interface ListAssetsParams {
-  drama_id?: string
-  episode_id?: number
-  storyboard_id?: number
+  drama_id?: ID
+  episode_id?: ID
+  storyboard_id?: ID
   type?: 'image' | 'video' | 'audio'
   category?: string
   tag_ids?: number[]

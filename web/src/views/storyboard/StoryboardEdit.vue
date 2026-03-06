@@ -1,6 +1,6 @@
 <template>
   <div class="storyboard-edit-container">
-    <el-page-header @back="goBack" :title="$t('common.back')">
+    <el-page-header :title="$t('common.back')" @back="goBack">
       <template #content>
         <h2>{{ $t('storyboard.edit') }}</h2>
       </template>

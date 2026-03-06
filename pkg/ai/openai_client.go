@@ -87,7 +87,7 @@ func NewOpenAIClient(baseURL, apiKey, model, endpoint string) *OpenAIClient {
 		Model:    model,
 		Endpoint: endpoint,
 		HTTPClient: &http.Client{
-			Timeout: 10 * time.Minute,
+			Timeout: 20 * time.Minute,
 		},
 	}
 }

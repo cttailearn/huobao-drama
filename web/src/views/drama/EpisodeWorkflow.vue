@@ -3,7 +3,7 @@
     <div class="content-wrapper animate-fade-in">
       <AppHeader :fixed="false" :show-logo="false">
         <template #left>
-          <el-button text @click="$router.back()" class="back-btn">
+          <el-button text class="back-btn" @click="$router.back()">
             <el-icon><ArrowLeft /></el-icon>
             <span>{{ $t("workflow.backToProject") }}</span>
           </el-button>
@@ -45,8 +45,8 @@
         <template #right>
           <el-button
             :icon="Setting"
-            @click="showModelConfigDialog"
             :title="$t('workflow.modelConfig')"
+            @click="showModelConfigDialog"
           >
             图文配置
           </el-button>
@@ -74,8 +74,8 @@
                 <el-button
                   type="primary"
                   size="default"
-                  @click="saveChapterScript"
                   :disabled="!scriptContent.trim() || generatingScript"
+                  @click="saveChapterScript"
                 >
                   <el-icon><Check /></el-icon>
                   <span>{{ $t("workflow.saveChapter") }}</span>
@@ -191,17 +191,17 @@
                 <div class="section-actions">
                   <el-checkbox
                     v-model="selectAllCharacters"
-                    @change="toggleSelectAllCharacters"
                     style="margin-right: 12px"
+                    @change="toggleSelectAllCharacters"
                   >
                     {{ $t("workflow.selectAll") }}
                   </el-checkbox>
                   <el-button
                     type="primary"
-                    @click="batchGenerateCharacterImages"
                     :loading="batchGeneratingCharacters"
                     :disabled="selectedCharacterIds.length === 0"
                     size="default"
+                    @click="batchGenerateCharacterImages"
                   >
                     {{ $t("workflow.batchGenerate") }} ({{
                       selectedCharacterIds.length
@@ -232,8 +232,8 @@
                         size="small"
                         :icon="Delete"
                         circle
-                        @click="deleteCharacter(char.id)"
                         :title="$t('workflow.deleteCharacter')"
+                        @click="deleteCharacter(char.id)"
                       />
                     </div>
 
@@ -290,9 +290,9 @@
                       >
                         <el-button
                           size="small"
-                          @click="openPromptDialog(char, 'character')"
                           :icon="Edit"
                           circle
+                          @click="openPromptDialog(char, 'character')"
                         />
                       </el-tooltip>
                       <el-tooltip
@@ -302,10 +302,10 @@
                         <el-button
                           type="primary"
                           size="small"
-                          @click="generateCharacterImage(char.id)"
                           :loading="generatingCharacterImages[char.id]"
                           :icon="MagicStick"
                           circle
+                          @click="generateCharacterImage(char.id)"
                         />
                       </el-tooltip>
                       <el-tooltip
@@ -314,9 +314,9 @@
                       >
                         <el-button
                           size="small"
-                          @click="uploadCharacterImage(char.id)"
                           :icon="Upload"
                           circle
+                          @click="uploadCharacterImage(char.id)"
                         />
                       </el-tooltip>
                       <el-tooltip
@@ -325,9 +325,9 @@
                       >
                         <el-button
                           size="small"
-                          @click="selectFromLibrary(char.id)"
                           :icon="Picture"
                           circle
+                          @click="selectFromLibrary(char.id)"
                         />
                       </el-tooltip>
                       <el-tooltip
@@ -336,10 +336,10 @@
                       >
                         <el-button
                           size="small"
-                          @click="addToCharacterLibrary(char)"
                           :icon="FolderAdd"
                           :disabled="!char.image_url"
                           circle
+                          @click="addToCharacterLibrary(char)"
                         />
                       </el-tooltip>
                     </div>
@@ -376,17 +376,17 @@
                 </el-button> -->
                   <el-checkbox
                     v-model="selectAllScenes"
-                    @change="toggleSelectAllScenes"
                     style="margin-left: 12px; margin-right: 12px"
+                    @change="toggleSelectAllScenes"
                   >
                     {{ $t("workflow.selectAll") }}
                   </el-checkbox>
                   <el-button
                     type="primary"
-                    @click="batchGenerateSceneImages"
                     :loading="batchGeneratingScenes"
                     :disabled="selectedSceneIds.length === 0"
                     size="default"
+                    @click="batchGenerateSceneImages"
                   >
                     {{ $t("workflow.batchGenerateSelected") }} ({{
                       selectedSceneIds.length
@@ -395,8 +395,8 @@
 
                   <el-button
                     :icon="Plus"
-                    @click="openAddSceneDialog"
                     size="default"
+                    @click="openAddSceneDialog"
                   >
                     {{ $t("workflow.addScene") }}
                   </el-button>
@@ -452,8 +452,8 @@
                       <div
                         v-else-if="scene.image_generation_status === 'failed'"
                         class="scene-placeholder failed"
-                        @click="generateSceneImage(scene.id)"
                         style="cursor: pointer"
+                        @click="generateSceneImage(scene.id)"
                       >
                         <el-icon :size="64"><WarningFilled /></el-icon>
                         <span>{{ $t("common.generateFailed") }}</span>
@@ -477,9 +477,9 @@
                       >
                         <el-button
                           size="small"
-                          @click="openPromptDialog(scene, 'scene')"
                           :icon="Edit"
                           circle
+                          @click="openPromptDialog(scene, 'scene')"
                         />
                       </el-tooltip>
                       <el-tooltip
@@ -489,10 +489,10 @@
                         <el-button
                           type="primary"
                           size="small"
-                          @click="generateSceneImage(scene.id)"
                           :loading="generatingSceneImages[scene.id]"
                           :icon="MagicStick"
                           circle
+                          @click="generateSceneImage(scene.id)"
                         />
                       </el-tooltip>
                       <el-tooltip
@@ -501,9 +501,9 @@
                       >
                         <el-button
                           size="small"
-                          @click="uploadSceneImage(scene.id)"
                           :icon="Upload"
                           circle
+                          @click="uploadSceneImage(scene.id)"
                         />
                       </el-tooltip>
                     </div>
@@ -644,9 +644,9 @@
               <el-empty :description="$t('workflow.splitStoryboardFirst')">
                 <el-button
                   type="primary"
-                  @click="generateShots"
                   :loading="generatingShots"
                   :icon="MagicStick"
+                  @click="generateShots"
                 >
                   {{
                     generatingShots
@@ -684,13 +684,13 @@
       </div>
 
       <div class="actions-container">
-        <div class="action-buttons" v-show="currentStep === 0">
+        <div v-show="currentStep === 0" class="action-buttons">
           <el-button
             type="primary"
             size="large"
-            @click="handleExtractCharactersAndBackgrounds"
             :loading="extractingCharactersAndBackgrounds"
             :disabled="!hasScript"
+            @click="handleExtractCharactersAndBackgrounds"
           >
             <el-icon><MagicStick /></el-icon>
             {{
@@ -702,8 +702,8 @@
           <el-button
             type="success"
             size="large"
-            @click="nextStep"
             :disabled="!hasExtractedData"
+            @click="nextStep"
           >
             {{ $t("workflow.nextStepGenerateImages") }}
             <el-icon><ArrowRight /></el-icon>
@@ -723,7 +723,7 @@
           </div>
         </div>
 
-        <div class="action-buttons" v-show="currentStep === 1">
+        <div v-show="currentStep === 1" class="action-buttons">
           <el-button size="large" @click="prevStep">
             <el-icon><ArrowLeft /></el-icon>
             {{ $t("workflow.prevStep") }}
@@ -731,8 +731,8 @@
           <el-button
             type="success"
             size="large"
-            @click="nextStep"
             :disabled="!allImagesGenerated"
+            @click="nextStep"
           >
             {{ $t("workflow.nextStepSplitShots") }}
             <el-icon><ArrowRight /></el-icon>
@@ -752,12 +752,12 @@
           </div>
         </div>
 
-        <div class="action-buttons" v-show="currentStep === 2">
+        <div v-show="currentStep === 2" class="action-buttons">
           <el-button size="large" @click="prevStep">
             <el-icon><ArrowLeft /></el-icon>
             {{ $t("workflow.prevStep") }}
           </el-button>
-          <el-button size="large" @click="regenerateShots" :icon="MagicStick">
+          <el-button size="large" :icon="MagicStick" @click="regenerateShots">
             {{ $t("workflow.reSplitShots") }}
           </el-button>
           <el-button type="success" size="large" @click="goToProfessionalUI">
@@ -949,8 +949,8 @@
           }}</el-button>
           <el-button
             type="primary"
-            @click="saveShotEdit"
             :loading="savingShot"
+            @click="saveShotEdit"
             >{{ $t("common.save") }}</el-button
           >
         </template>
@@ -1187,8 +1187,8 @@
           </el-button>
           <el-button
             type="primary"
-            @click="handleExtractScenes"
             :loading="extractingScenes"
+            @click="handleExtractScenes"
           >
             {{ $t("workflow.startExtract") }}
           </el-button>
@@ -1254,12 +1254,12 @@ const generatingShots = ref(false);
 const extractingCharactersAndBackgrounds = ref(false);
 const batchGeneratingCharacters = ref(false);
 const batchGeneratingScenes = ref(false);
-const generatingCharacterImages = ref<Record<number, boolean>>({});
+const generatingCharacterImages = ref<Record<string, boolean>>({});
 const generatingSceneImages = ref<Record<string, boolean>>({});
 
 // 选择状态
-const selectedCharacterIds = ref<number[]>([]);
-const selectedSceneIds = ref<number[]>([]);
+const selectedCharacterIds = ref<(string | number)[]>([]);
+const selectedSceneIds = ref<(string | number)[]>([]);
 const selectAllCharacters = ref(false);
 const selectAllScenes = ref(false);
 
@@ -1790,7 +1790,7 @@ const pollExtractTask = async (
   taskId: string,
   type: "character" | "background",
 ) => {
-  const maxAttempts = 60; // 最多轮询60次（2分钟）
+  const maxAttempts = 600; // 最多轮询600次（20分钟）
   const interval = 2000; // 每2秒查询一次
 
   for (let i = 0; i < maxAttempts; i++) {
@@ -1839,16 +1839,14 @@ const pollExtractTask = async (
   );
 };
 
-const generateCharacterImage = async (characterId: number) => {
-  generatingCharacterImages.value[characterId] = true;
+const generateCharacterImage = async (characterId: string | number) => {
+  const key = String(characterId);
+  generatingCharacterImages.value[key] = true;
 
   try {
     // 获取用户选择的图片生成模型
     const model = selectedImageModel.value || undefined;
-    const response = await characterLibraryAPI.generateCharacterImage(
-      characterId.toString(),
-      model,
-    );
+    const response = await characterLibraryAPI.generateCharacterImage(String(characterId), model);
     const imageGenId = response.image_generation?.id;
 
     if (imageGenId) {
@@ -1865,7 +1863,7 @@ const generateCharacterImage = async (characterId: number) => {
   } catch (error: any) {
     ElMessage.error(error.message || "生成失败");
   } finally {
-    generatingCharacterImages.value[characterId] = false;
+    generatingCharacterImages.value[key] = false;
   }
 };
 
@@ -1913,16 +1911,14 @@ const batchGenerateCharacterImages = async () => {
   }
 };
 
-const generateSceneImage = async (sceneId: string) => {
-  generatingSceneImages.value[sceneId] = true;
+const generateSceneImage = async (sceneId: string | number) => {
+  const key = String(sceneId);
+  generatingSceneImages.value[key] = true;
 
   try {
     // 获取用户选择的图片生成模型
     const model = selectedImageModel.value || undefined;
-    const response = await dramaAPI.generateSceneImage({
-      scene_id: parseInt(sceneId),
-      model,
-    });
+    const response = await dramaAPI.generateSceneImage({ scene_id: sceneId, model });
     const imageGenId = response.image_generation?.id;
 
     if (imageGenId) {
@@ -1939,7 +1935,7 @@ const generateSceneImage = async (sceneId: string) => {
   } catch (error: any) {
     ElMessage.error(error.message || "生成失败");
   } finally {
-    generatingSceneImages.value[sceneId] = false;
+    generatingSceneImages.value[key] = false;
   }
 };
 
@@ -2161,17 +2157,17 @@ const savePrompt = async () => {
   }
 };
 
-const uploadCharacterImage = (characterId: number) => {
+const uploadCharacterImage = (characterId: string | number) => {
   currentUploadTarget.value = { id: characterId, type: "character" };
   uploadDialogVisible.value = true;
 };
 
-const uploadSceneImage = (sceneId: string) => {
+const uploadSceneImage = (sceneId: string | number) => {
   currentUploadTarget.value = { id: sceneId, type: "scene" };
   uploadDialogVisible.value = true;
 };
 
-const selectFromLibrary = async (characterId: number) => {
+const selectFromLibrary = async (characterId: string | number) => {
   try {
     const result = await characterLibraryAPI.list({ page_size: 50 });
     libraryItems.value = result.items || [];
@@ -2263,7 +2259,7 @@ const handleUploadError = () => {
   ElMessage.error("上传失败，请重试");
 };
 
-const deleteCharacter = async (characterId: number) => {
+const deleteCharacter = async (characterId: string | number) => {
   try {
     await ElMessageBox.confirm(
       $t("workflow.deleteCharacterConfirm"),
@@ -2343,7 +2339,7 @@ const saveScene = async () => {
     // 创建场景，关联到当前章节
     await dramaAPI.createScene({
       drama_id: parseInt(dramaId),
-      episode_id: parseInt(currentEpisode.value.id),
+      episode_id: parseInt(String(currentEpisode.value.id)),
       location: newScene.value.location,
       time: newScene.value.time || "",
       prompt: newScene.value.prompt,

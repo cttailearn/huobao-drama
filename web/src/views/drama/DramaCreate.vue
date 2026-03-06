@@ -5,7 +5,7 @@
       <!-- Header / 头部 -->
       <AppHeader :fixed="false" :show-logo="false">
         <template #left>
-          <el-button text @click="goBack" class="back-btn">
+          <el-button text class="back-btn" @click="goBack">
             <el-icon><ArrowLeft /></el-icon>
             <span>返回</span>
           </el-button>

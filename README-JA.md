@@ -1,8 +1,8 @@
-# 🎬 Huobao Drama - AI ショートドラマ制作プラットフォーム
+# 🎬 XingYue Studio - AI 小説＆ショートドラマ制作プラットフォーム
 
 <div align="center">
 
-**Go + Vue3 ベースのフルスタック AI ショートドラマ自動化プラットフォーム**
+**Go + Vue3 ベースのフルスタック AI 小説 + ショートドラマ自動化プラットフォーム**
 
 [![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://golang.org)
 [![Vue Version](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat&logo=vue.js)](https://vuejs.org)
@@ -18,7 +18,7 @@
 
 ## 📖 概要
 
-Huobao Drama は、脚本生成、キャラクターデザイン、絵コンテ作成から動画合成までの全ワークフローを自動化する AI 駆動のショートドラマ制作プラットフォームです。
+XingYue Studio は、小説生成とショートドラマ制作の両方をサポートし、小説設計、脚本生成、キャラクターデザイン、絵コンテ作成から動画合成までを自動化する AI 駆動の制作プラットフォームです。
 
 火宝短剧商业版地址：[火宝短剧商业版](https://drama.chatfire.site/shortvideo)
 
@@ -141,7 +141,7 @@ vim configs/config.yaml
 
 ```yaml
 app:
-  name: "Huobao Drama API"
+  name: "XingYue Studio API"
   version: "1.0.0"
   debug: true # 開発環境ではtrue、本番環境ではfalseに設定
 
@@ -426,7 +426,7 @@ chmod +x huobao-drama
 
 ```ini
 [Unit]
-Description=Huobao Drama Service
+Description=XingYue Studio Service
 After=network.target
 
 [Service]
@@ -635,7 +635,7 @@ Issue と Pull Request を歓迎します！
 
 ## 👨‍💻 私たちについて
 
-**AI 火宝 - AI スタジオ起業中**
+**AI 星月 - AI スタジオ起業中**
 
 - 🏠 **所在地**: 中国南京
 - 🚀 **ステータス**: 起業中
@@ -662,6 +662,6 @@ Issue と Pull Request を歓迎します！
 
 [![Star History Chart](https://api.star-history.com/svg?repos=chatfire-AI/huobao-drama&type=date&legend=top-left)](https://www.star-history.com/#chatfire-AI/huobao-drama&type=date&legend=top-left)
 
-Made with ❤️ by Huobao Team
+Made with ❤️ by XingYue Team
 
 </div>

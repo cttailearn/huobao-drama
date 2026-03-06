@@ -1,6 +1,6 @@
 <template>
   <div class="scene-images-container">
-    <el-page-header @back="goBack" title="返回项目">
+    <el-page-header title="返回项目" @back="goBack">
       <template #content>
         <h2>场景图片生成</h2>
       </template>
@@ -15,7 +15,7 @@
           :name="episode.id"
         >
           <el-row :gutter="20">
-            <el-col :span="8" v-for="scene in episode.scenes" :key="scene.id">
+            <el-col v-for="scene in episode.scenes" :key="scene.id" :span="8">
               <el-card
                 shadow="hover"
                 class="scene-card"
@@ -49,10 +49,10 @@
 
                 <el-button
                   type="primary"
-                  @click="generateImage(scene)"
                   :loading="generatingId === scene.id"
                   :disabled="!!generatingId && generatingId !== scene.id"
                   style="width: 100%"
+                  @click="generateImage(scene)"
                 >
                   {{ hasImage(scene) ? "重新生成" : "生成图片" }}
                 </el-button>
@@ -66,8 +66,8 @@
         <el-button
           type="success"
           size="large"
-          @click="goToNextStep"
           :disabled="!allImagesGenerated"
+          @click="goToNextStep"
         >
           下一步：视频生成
         </el-button>
@@ -90,7 +90,7 @@ const dramaId = route.params.id as string;
 
 const episodes = ref<Episode[]>([]);
 const activeEpisode = ref<string>();
-const generatingId = ref<string>();
+const generatingId = ref<string | number>();
 
 const allImagesGenerated = computed(() => {
   return episodes.value.every((ep) => ep.scenes?.every((s) => s.image_url));
@@ -113,7 +113,7 @@ const generateImage = async (scene: Scene) => {
 
     const result = await imageAPI.generateImage({
       drama_id: dramaId,
-      scene_id: scene.id as number,
+      scene_id: scene.id,
       image_type: "scene",
       prompt: prompt,
     });

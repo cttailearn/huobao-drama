@@ -12,10 +12,6 @@
       <div class="dialog-header">
         <span class="dialog-title">{{ $t("aiConfig.title") }}</span>
         <div class="header-actions">
-          <el-button type="success" size="small" @click="showQuickSetupDialog">
-            <el-icon><MagicStick /></el-icon>
-            <span>一键配置火宝</span>
-          </el-button>
           <el-button type="primary" size="small" @click="showCreateDialog">
             <el-icon><Plus /></el-icon>
             <span>{{ $t("aiConfig.addConfig") }}</span>
@@ -27,8 +23,8 @@
     <!-- Tabs -->
     <el-tabs
       v-model="activeTab"
-      @tab-change="handleTabChange"
       class="config-tabs"
+      @tab-change="handleTabChange"
     >
       <el-tab-pane :label="$t('aiConfig.tabs.text')" name="text">
         <ConfigList
@@ -46,10 +42,11 @@
         <ConfigList
           :configs="configs"
           :loading="loading"
-          :show-test-button="false"
+          :show-test-button="true"
           @edit="handleEdit"
           @delete="handleDelete"
           @toggle-active="handleToggleActive"
+          @test="handleTest"
         />
       </el-tab-pane>
 
@@ -57,69 +54,14 @@
         <ConfigList
           :configs="configs"
           :loading="loading"
-          :show-test-button="false"
+          :show-test-button="true"
           @edit="handleEdit"
           @delete="handleDelete"
           @toggle-active="handleToggleActive"
+          @test="handleTest"
         />
       </el-tab-pane>
     </el-tabs>
-
-    <!-- Quick Setup Dialog -->
-    <el-dialog
-      v-model="quickSetupVisible"
-      title="一键配置"
-      width="500px"
-      :close-on-click-modal="false"
-      append-to-body
-    >
-      <div class="quick-setup-info">
-        <p>将自动创建以下配置：</p>
-        <ul>
-          <li>
-            <strong>文本服务</strong>: {{ providerConfigs.text[1].models[0] }}
-          </li>
-          <li>
-            <strong>图片服务</strong>: {{ providerConfigs.image[1].models[0] }}
-          </li>
-          <li>
-            <strong>视频服务</strong>: {{ providerConfigs.video[1].models[0] }}
-          </li>
-        </ul>
-        <p class="quick-setup-tip">Base URL: https://api.chatfire.site/v1</p>
-      </div>
-      <el-form label-width="80px">
-        <el-form-item label="API Key" required>
-          <el-input
-            v-model="quickSetupApiKey"
-            type="password"
-            show-password
-            placeholder="请输入 ChatFire API Key"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="quick-setup-footer">
-          <a
-            href="https://api.chatfire.site/login?inviteCode=C4453345"
-            target="_blank"
-            class="register-link"
-          >
-            没有 API Key？点击注册
-          </a>
-          <div class="footer-buttons">
-            <el-button @click="quickSetupVisible = false">取消</el-button>
-            <el-button
-              type="primary"
-              @click="handleQuickSetup"
-              :loading="quickSetupLoading"
-            >
-              确认配置
-            </el-button>
-          </div>
-        </div>
-      </template>
-    </el-dialog>
 
     <!-- Edit/Create Sub-Dialog -->
     <el-dialog
@@ -141,8 +83,8 @@
           <el-select
             v-model="form.provider"
             :placeholder="$t('aiConfig.form.providerPlaceholder')"
-            @change="handleProviderChange"
             style="width: 100%"
+            @change="handleProviderChange"
           >
             <el-option
               v-for="provider in availableProviders"
@@ -185,7 +127,10 @@
               :value="model"
             />
           </el-select>
-          <div class="form-tip">{{ $t("aiConfig.form.modelTip") }}</div>
+          <div class="form-tip">
+            {{ $t("aiConfig.form.modelTip") }}
+            <span v-if="form.provider === 'comfyui'">（ComfyUI 模型可不填）</span>
+          </div>
         </el-form-item>
 
         <el-form-item :label="$t('aiConfig.form.baseUrl')" prop="base_url">
@@ -207,7 +152,31 @@
             show-password
             :placeholder="$t('aiConfig.form.apiKeyPlaceholder')"
           />
-          <div class="form-tip">{{ $t("aiConfig.form.apiKeyTip") }}</div>
+          <div class="form-tip">
+            {{ $t("aiConfig.form.apiKeyTip") }}
+            <span v-if="form.provider === 'comfyui'">（ComfyUI 可留空，建议在 settings 中配置 api_key_comfy_org）</span>
+          </div>
+        </el-form-item>
+
+        <el-form-item
+          v-if="form.provider === 'comfyui' && (form.service_type === 'image' || form.service_type === 'video')"
+          label="工作流 JSON"
+        >
+          <el-input
+            v-model="form.settings"
+            type="textarea"
+            :rows="8"
+            placeholder='可直接粘贴配置 JSON，例如 {"workflow_json":"{...}","api_key_comfy_org":"comfyui-xxx"}'
+          />
+          <input
+            type="file"
+            accept=".json,application/json"
+            class="workflow-file-input"
+            @change="handleWorkflowFileImport"
+          />
+          <div class="form-tip">
+            支持导入 ComfyUI API 工作流 JSON 文件，URL 使用 Base URL（如 http://127.0.0.1:8188）
+          </div>
         </el-form-item>
 
         <el-form-item v-if="isEdit" :label="$t('aiConfig.form.isActive')">
@@ -217,27 +186,19 @@
 
       <template #footer>
         <div class="quick-setup-footer">
-          <a
-            href="https://api.chatfire.site/login?inviteCode=C4453345"
-            target="_blank"
-            class="register-link"
-          >
-            没有 API Key？点击注册
-          </a>
           <div class="footer-buttons">
             <el-button @click="editDialogVisible = false">{{
               $t("common.cancel")
             }}</el-button>
             <el-button
-              v-if="form.service_type === 'text'"
-              @click="testConnection"
               :loading="testing"
+              @click="testConnection"
               >{{ $t("aiConfig.actions.test") }}</el-button
             >
             <el-button
               type="primary"
-              @click="handleSubmit"
               :loading="submitting"
+              @click="handleSubmit"
             >
               {{ isEdit ? $t("common.save") : $t("common.create") }}
             </el-button>
@@ -256,7 +217,7 @@ import {
   type FormInstance,
   type FormRules,
 } from "element-plus";
-import { Plus, MagicStick } from "@element-plus/icons-vue";
+import { Plus } from "@element-plus/icons-vue";
 import { aiAPI } from "@/api/ai";
 import type {
   AIServiceConfig,
@@ -289,9 +250,6 @@ const editingId = ref<number>();
 const formRef = ref<FormInstance>();
 const submitting = ref(false);
 const testing = ref(false);
-const quickSetupVisible = ref(false);
-const quickSetupApiKey = ref("");
-const quickSetupLoading = ref(false);
 
 const form = reactive<
   CreateAIConfigRequest & { is_active?: boolean; provider?: string }
@@ -352,6 +310,7 @@ const providerConfigs: Record<AIServiceType, ProviderConfig[]> = {
       name: "Google Gemini",
       models: ["gemini-3-pro-image-preview"],
     },
+    { id: "comfyui", name: "ComfyUI", models: [] },
     { id: "openai", name: "OpenAI", models: ["dall-e-3", "dall-e-2"] },
   ],
   video: [
@@ -388,6 +347,7 @@ const providerConfigs: Record<AIServiceType, ProviderConfig[]> = {
         "MiniMax-Hailuo-02",
       ],
     },
+    { id: "comfyui", name: "ComfyUI", models: [] },
     { id: "openai", name: "OpenAI", models: ["sora-2", "sora-2-pro"] },
   ],
 };
@@ -426,12 +386,16 @@ const fullEndpointExample = computed(() => {
   } else if (serviceType === "image") {
     if (provider === "gemini" || provider === "google") {
       endpoint = "/v1beta/models/{model}:generateContent";
+    } else if (provider === "comfyui") {
+      endpoint = "/prompt";
     } else {
       endpoint = "/images/generations";
     }
   } else if (serviceType === "video") {
     if (provider === "chatfire") {
       endpoint = "/video/generations";
+    } else if (provider === "comfyui") {
+      endpoint = "/prompt";
     } else if (
       provider === "doubao" ||
       provider === "volcengine" ||
@@ -457,13 +421,30 @@ const rules: FormRules = {
     { required: true, message: "请输入 Base URL", trigger: "blur" },
     { type: "url", message: "请输入正确的 URL 格式", trigger: "blur" },
   ],
-  api_key: [{ required: true, message: "请输入 API Key", trigger: "blur" }],
+  api_key: [
+    {
+      validator: (_rule, value, callback) => {
+        if (form.provider === "comfyui") {
+          callback();
+          return;
+        }
+        if (!value || !String(value).trim()) {
+          callback(new Error("请输入 API Key"));
+          return;
+        }
+        callback();
+      },
+      trigger: "blur",
+    },
+  ],
   model: [
     {
-      required: true,
-      message: "请至少选择一个模型",
       trigger: "change",
-      validator: (rule: any, value: any, callback: any) => {
+      validator: (_rule: any, value: any, callback: any) => {
+        if (form.provider === "comfyui") {
+          callback();
+          return;
+        }
         if (Array.isArray(value) && value.length > 0) {
           callback();
         } else if (typeof value === "string" && value.length > 0) {
@@ -541,6 +522,7 @@ const handleEdit = (config: AIServiceConfig) => {
     model: Array.isArray(config.model) ? config.model : [config.model],
     priority: config.priority || 0,
     is_active: config.is_active,
+    settings: config.settings || "",
   });
   editDialogVisible.value = true;
 };
@@ -630,6 +612,7 @@ const handleSubmit = async () => {
           model: form.model,
           priority: form.priority,
           is_active: form.is_active,
+          settings: form.settings,
         };
         await aiAPI.update(editingId.value, updateData);
         ElMessage.success("更新成功");
@@ -660,6 +643,8 @@ const handleProviderChange = () => {
   // 根据厂商自动设置 Base URL
   if (form.provider === "gemini" || form.provider === "google") {
     form.base_url = "https://generativelanguage.googleapis.com";
+  } else if (form.provider === "comfyui") {
+    form.base_url = "http://127.0.0.1:8188";
   } else if (form.provider === "minimax") {
     form.base_url = "https://api.minimaxi.com/v1";
   } else if (form.provider === "volces" || form.provider === "volcengine") {
@@ -687,123 +672,33 @@ const resetForm = () => {
     model: [],
     priority: 0,
     is_active: true,
+    settings: "",
   });
   formRef.value?.resetFields();
 };
 
-const showQuickSetupDialog = () => {
-  quickSetupApiKey.value = "";
-  quickSetupVisible.value = true;
-};
-
-const handleQuickSetup = async () => {
-  if (!quickSetupApiKey.value.trim()) {
-    ElMessage.warning("请输入 API Key");
-    return;
-  }
-
-  quickSetupLoading.value = true;
-  const baseUrl = "https://api.chatfire.site/v1";
-  const apiKey = quickSetupApiKey.value.trim();
-
-  try {
-    // 加载所有类型的配置，检查是否已存在相同 baseUrl 的配置
-    const [textConfigs, imageConfigs, videoConfigs] = await Promise.all([
-      aiAPI.list("text"),
-      aiAPI.list("image"),
-      aiAPI.list("video"),
-    ]);
-
-    const createdServices: string[] = [];
-    const skippedServices: string[] = [];
-
-    // 创建文本配置（如果不存在）
-    const existingTextConfig = textConfigs.find((c) => c.base_url === baseUrl);
-    if (!existingTextConfig) {
-      const textProvider = providerConfigs.text.find(
-        (p) => p.id === "chatfire",
-      )!;
-      await aiAPI.create({
-        service_type: "text",
-        provider: "chatfire",
-        name: generateConfigName("chatfire", "text"),
-        base_url: baseUrl,
-        api_key: apiKey,
-        model: [textProvider.models[0]],
-        priority: 0,
-      });
-      createdServices.push("文本");
-    } else {
-      skippedServices.push("文本");
+const handleWorkflowFileImport = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const text = String(reader.result || "");
+      const workflow = JSON.parse(text);
+      const existingSettings = form.settings ? JSON.parse(form.settings) : {};
+      const merged = {
+        ...existingSettings,
+        workflow_json: workflow,
+      };
+      form.settings = JSON.stringify(merged, null, 2);
+      ElMessage.success("工作流 JSON 导入成功");
+    } catch (error) {
+      ElMessage.error("工作流文件格式无效");
     }
-
-    // 创建图片配置（如果不存在）
-    const existingImageConfig = imageConfigs.find(
-      (c) => c.base_url === baseUrl,
-    );
-    if (!existingImageConfig) {
-      const imageProvider = providerConfigs.image.find(
-        (p) => p.id === "chatfire",
-      )!;
-      await aiAPI.create({
-        service_type: "image",
-        provider: "chatfire",
-        name: generateConfigName("chatfire", "image"),
-        base_url: baseUrl,
-        api_key: apiKey,
-        model: [imageProvider.models[0]],
-        priority: 0,
-      });
-      createdServices.push("图片");
-    } else {
-      skippedServices.push("图片");
-    }
-
-    // 创建视频配置（如果不存在）
-    const existingVideoConfig = videoConfigs.find(
-      (c) => c.base_url === baseUrl,
-    );
-    if (!existingVideoConfig) {
-      const videoProvider = providerConfigs.video.find(
-        (p) => p.id === "chatfire",
-      )!;
-      await aiAPI.create({
-        service_type: "video",
-        provider: "chatfire",
-        name: generateConfigName("chatfire", "video"),
-        base_url: baseUrl,
-        api_key: apiKey,
-        model: [videoProvider.models[0]],
-        priority: 0,
-      });
-      createdServices.push("视频");
-    } else {
-      skippedServices.push("视频");
-    }
-
-    // 显示结果消息
-    if (createdServices.length > 0 && skippedServices.length > 0) {
-      ElMessage.success(
-        `已创建 ${createdServices.join("、")} 配置，${skippedServices.join("、")} 配置已存在`,
-      );
-    } else if (createdServices.length > 0) {
-      ElMessage.success(
-        `一键配置成功！已创建 ${createdServices.join("、")} 服务配置`,
-      );
-    } else {
-      ElMessage.info("所有配置已存在，无需重复创建");
-    }
-
-    quickSetupVisible.value = false;
-    loadConfigs();
-    if (createdServices.length > 0) {
-      emit("config-updated");
-    }
-  } catch (error: any) {
-    ElMessage.error(error.message || "配置失败");
-  } finally {
-    quickSetupLoading.value = false;
-  }
+  };
+  reader.readAsText(file);
+  target.value = "";
 };
 
 // Load configs when dialog opens
@@ -834,51 +729,11 @@ watch(visible, (val) => {
   gap: 8px;
 }
 
-.quick-setup-info {
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  font-size: 14px;
-  color: var(--text-primary);
-
-  p {
-    margin: 0 0 8px 0;
-  }
-
-  ul {
-    margin: 8px 0;
-    padding-left: 20px;
-  }
-
-  li {
-    margin: 4px 0;
-    color: var(--text-secondary);
-  }
-
-  .quick-setup-tip {
-    margin-top: 12px;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-}
-
 .quick-setup-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   width: 100%;
-}
-
-.register-link {
-  font-size: 12px;
-  color: var(--text-muted);
-  text-decoration: none;
-  transition: color 0.2s;
-
-  &:hover {
-    color: var(--accent);
-  }
 }
 
 .footer-buttons {
@@ -909,6 +764,11 @@ watch(visible, (val) => {
   word-break: break-all;
   overflow-wrap: break-word;
   line-height: 1.5;
+}
+
+.workflow-file-input {
+  width: 100%;
+  margin-top: 8px;
 }
 
 /* Dark mode */

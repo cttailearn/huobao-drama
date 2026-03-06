@@ -32,7 +32,7 @@ export interface GenerateFramePromptRequest {
  * 生成指定类型的帧提示词
  */
 export function generateFramePrompt(
-  storyboardId: number,
+  storyboardId: string | number,
   data: GenerateFramePromptRequest
 ): Promise<GenerateFramePromptResponse> {
   return request.post<GenerateFramePromptResponse>(`/storyboards/${storyboardId}/frame-prompt`, data)
@@ -41,21 +41,21 @@ export function generateFramePrompt(
 /**
  * 生成首帧提示词
  */
-export function generateFirstFrame(storyboardId: number): Promise<GenerateFramePromptResponse> {
+export function generateFirstFrame(storyboardId: string | number): Promise<GenerateFramePromptResponse> {
   return generateFramePrompt(storyboardId, { frame_type: 'first' })
 }
 
 /**
  * 生成关键帧提示词
  */
-export function generateKeyFrame(storyboardId: number): Promise<GenerateFramePromptResponse> {
+export function generateKeyFrame(storyboardId: string | number): Promise<GenerateFramePromptResponse> {
   return generateFramePrompt(storyboardId, { frame_type: 'key' })
 }
 
 /**
  * 生成尾帧提示词
  */
-export function generateLastFrame(storyboardId: number): Promise<GenerateFramePromptResponse> {
+export function generateLastFrame(storyboardId: string | number): Promise<GenerateFramePromptResponse> {
   return generateFramePrompt(storyboardId, { frame_type: 'last' })
 }
 
@@ -63,7 +63,7 @@ export function generateLastFrame(storyboardId: number): Promise<GenerateFramePr
  * 生成分镜板（3格组合）
  */
 export function generatePanelFrames(
-  storyboardId: number,
+  storyboardId: string | number,
   panelCount: number = 3
 ): Promise<GenerateFramePromptResponse> {
   return generateFramePrompt(storyboardId, {
@@ -75,7 +75,7 @@ export function generatePanelFrames(
 /**
  * 生成动作序列（5格）
  */
-export function generateActionSequence(storyboardId: number): Promise<GenerateFramePromptResponse> {
+export function generateActionSequence(storyboardId: string | number): Promise<GenerateFramePromptResponse> {
   return generateFramePrompt(storyboardId, { frame_type: 'action' })
 }
 
@@ -94,6 +94,6 @@ export interface FramePromptRecord {
 /**
  * 查询镜头的所有已生成帧提示词
  */
-export function getStoryboardFramePrompts(storyboardId: number): Promise<{ frame_prompts: FramePromptRecord[] }> {
+export function getStoryboardFramePrompts(storyboardId: string | number): Promise<{ frame_prompts: FramePromptRecord[] }> {
   return request.get<{ frame_prompts: FramePromptRecord[] }>(`/storyboards/${storyboardId}/frame-prompts`)
 }

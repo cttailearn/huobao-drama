@@ -1,15 +1,17 @@
+import type { ID } from './drama'
+
 export interface ImageGeneration {
   id: number
-  storyboard_id?: number
-  scene_id?: string
-  drama_id: string
-  character_id?: number
+  storyboard_id?: ID
+  scene_id?: ID
+  drama_id: ID
+  character_id?: ID
   image_type?: string
   frame_type?: string
   provider: string
   prompt: string
   negative_prompt?: string
-  model: string
+  model?: string
   size?: string
   quality?: string
   style?: string
@@ -34,9 +36,9 @@ export type ImageStatus = 'pending' | 'processing' | 'completed' | 'failed'
 export type ImageProvider = 'openai' | 'dalle' | 'midjourney' | 'stable_diffusion' | 'sd'
 
 export interface GenerateImageRequest {
-  scene_id?: number
-  storyboard_id?: number
-  drama_id: string
+  scene_id?: ID
+  storyboard_id?: ID
+  drama_id: ID
   image_type?: string
   frame_type?: string
   prompt: string
@@ -55,9 +57,9 @@ export interface GenerateImageRequest {
 }
 
 export interface ImageGenerationListParams {
-  drama_id?: string
-  scene_id?: string
-  storyboard_id?: number
+  drama_id?: ID
+  scene_id?: ID
+  storyboard_id?: ID
   frame_type?: string
   status?: ImageStatus
   page?: number

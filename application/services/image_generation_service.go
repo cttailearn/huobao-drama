@@ -521,6 +521,8 @@ func (s *ImageGenerationService) getImageClient(provider string) (image.ImageCli
 	case "gemini", "google":
 		endpoint = "/v1beta/models/{model}:generateContent"
 		return image.NewGeminiImageClient(config.BaseURL, config.APIKey, model, endpoint), nil
+	case "comfyui":
+		return image.NewComfyUIImageClient(config.BaseURL, config.APIKey, model, config.Settings)
 	default:
 		endpoint = "/images/generations"
 		return image.NewOpenAIImageClient(config.BaseURL, config.APIKey, model, endpoint), nil
@@ -579,6 +581,8 @@ func (s *ImageGenerationService) getImageClientWithModel(provider string, modelN
 	case "gemini", "google":
 		endpoint = "/v1beta/models/{model}:generateContent"
 		return image.NewGeminiImageClient(config.BaseURL, config.APIKey, model, endpoint), nil
+	case "comfyui":
+		return image.NewComfyUIImageClient(config.BaseURL, config.APIKey, model, config.Settings)
 	default:
 		endpoint = "/images/generations"
 		return image.NewOpenAIImageClient(config.BaseURL, config.APIKey, model, endpoint), nil
@@ -1034,54 +1038,103 @@ Please strictly follow the JSON format and ensure all fields use English.`
 请严格按照JSON格式输出，确保所有字段都使用中文。`
 	}
 
-	prompt := fmt.Sprintf(`%s
-
-%s
-%s
-
-%s`, systemPrompt, contentLabel, scriptContent, formatInstructions)
-
-	// 打印完整提示词用于调试
-	s.log.Infow("=== AI Prompt for Background Extraction (extractBackgroundsFromScript) ===",
-		"language", s.promptI18n.GetLanguage(),
-		"prompt_length", len(prompt),
-		"full_prompt", prompt)
-
-	response, err := client.GenerateText(prompt, "", ai.WithTemperature(0.7))
-	if err != nil {
-		s.log.Errorw("Failed to extract backgrounds with AI", "error", err)
-		return nil, fmt.Errorf("AI提取场景失败: %w", err)
-	}
-
-	// 打印AI返回的原始响应
-	s.log.Infow("=== AI Response for Background Extraction (extractBackgroundsFromScript) ===",
-		"response_length", len(response),
-		"raw_response", response)
-
-	// 解析AI返回的JSON
-	var backgrounds []BackgroundInfo
-
-	// 先尝试解析为数组格式
-	if err := utils.SafeParseAIJSON(response, &backgrounds); err == nil {
-		s.log.Infow("Parsed backgrounds as array format", "count", len(backgrounds))
-	} else {
-		// 尝试解析为对象格式
+	parseBackgrounds := func(response string) ([]BackgroundInfo, error) {
+		var backgrounds []BackgroundInfo
+		if err := utils.SafeParseAIJSON(response, &backgrounds); err == nil {
+			return backgrounds, nil
+		}
 		var result struct {
 			Backgrounds []BackgroundInfo `json:"backgrounds"`
 		}
 		if err := utils.SafeParseAIJSON(response, &result); err != nil {
-			s.log.Errorw("Failed to parse AI response in both formats", "error", err, "response", response[:min(len(response), 500)])
+			return nil, err
+		}
+		return result.Backgrounds, nil
+	}
+
+	chunkOpts := utils.TextChunkOptions{
+		MaxChars:     s.config.Extraction.LongTextChunkChars,
+		OverlapChars: s.config.Extraction.LongTextOverlapChars,
+		MinChars:     s.config.Extraction.LongTextMinChunkChars,
+		MaxChunks:    s.config.Extraction.LongTextMaxChunks,
+	}
+	chunks := utils.SplitLongText(scriptContent, chunkOpts)
+	if len(chunks) == 0 {
+		return []BackgroundInfo{}, nil
+	}
+
+	merged := make(map[string]BackgroundInfo)
+	for _, ch := range chunks {
+		prompt := fmt.Sprintf(`%s
+
+%s
+%s
+
+%s`, systemPrompt, contentLabel, ch.Text, formatInstructions)
+
+		s.log.Infow("=== AI Prompt for Background Extraction (extractBackgroundsFromScript) ===",
+			"language", s.promptI18n.GetLanguage(),
+			"chunk", ch.Index,
+			"chunks", ch.Total,
+			"prompt_length", len(prompt))
+
+		response, err := client.GenerateText(prompt, "", ai.WithTemperature(0.7))
+		if err != nil {
+			s.log.Errorw("Failed to extract backgrounds with AI", "error", err, "chunk", ch.Index, "chunks", ch.Total)
+			return nil, fmt.Errorf("AI提取场景失败: %w", err)
+		}
+
+		s.log.Infow("=== AI Response for Background Extraction (extractBackgroundsFromScript) ===",
+			"chunk", ch.Index,
+			"chunks", ch.Total,
+			"response_length", len(response),
+			"raw_preview", response[:min(len(response), 500)])
+
+		backgrounds, err := parseBackgrounds(response)
+		if err != nil {
+			s.log.Errorw("Failed to parse AI response in both formats", "error", err, "chunk", ch.Index, "response", response[:min(len(response), 500)])
 			return nil, fmt.Errorf("解析AI响应失败: %w", err)
 		}
-		backgrounds = result.Backgrounds
-		s.log.Infow("Parsed backgrounds as object format", "count", len(backgrounds))
+
+		for _, bg := range backgrounds {
+			key := strings.TrimSpace(bg.Location) + "|" + strings.TrimSpace(bg.Time)
+			if strings.TrimSpace(key) == "|" {
+				continue
+			}
+			existing, ok := merged[key]
+			if !ok {
+				bg.Location = strings.TrimSpace(bg.Location)
+				bg.Time = strings.TrimSpace(bg.Time)
+				merged[key] = bg
+				continue
+			}
+			if strings.TrimSpace(existing.Prompt) == "" && strings.TrimSpace(bg.Prompt) != "" {
+				existing.Prompt = bg.Prompt
+			} else if len(bg.Prompt) > len(existing.Prompt) {
+				existing.Prompt = bg.Prompt
+			}
+			if strings.TrimSpace(existing.Atmosphere) == "" && strings.TrimSpace(bg.Atmosphere) != "" {
+				existing.Atmosphere = bg.Atmosphere
+			}
+			merged[key] = existing
+		}
+
+	}
+
+	final := make([]BackgroundInfo, 0, len(merged))
+	for _, bg := range merged {
+		if strings.TrimSpace(bg.Location) == "" || strings.TrimSpace(bg.Time) == "" {
+			continue
+		}
+		final = append(final, bg)
 	}
 
 	s.log.Infow("Extracted backgrounds from script",
 		"drama_id", dramaID,
-		"backgrounds_count", len(backgrounds))
+		"chunks", len(chunks),
+		"backgrounds_count", len(final))
 
-	return backgrounds, nil
+	return final, nil
 }
 
 // extractBackgroundsWithAI 使用AI智能分析场景并提取唯一背景

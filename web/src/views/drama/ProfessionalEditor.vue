@@ -7,7 +7,7 @@
       @config-updated="loadVideoModels"
     >
       <template #left>
-        <el-button text @click="goBack" class="back-btn">
+        <el-button text class="back-btn" @click="goBack">
           <el-icon>
             <ArrowLeft />
           </el-icon>
@@ -57,12 +57,12 @@
                     link
                     type="danger"
                     :icon="Delete"
-                    @click.stop="handleDeleteStoryboard(shot)"
                     class="delete-btn"
+                    @click.stop="handleDeleteStoryboard(shot)"
                   />
                 </div>
               </div>
-              <div class="shot-action" v-if="shot.action">
+              <div v-if="shot.action" class="shot-action">
                 {{ shot.action }}
               </div>
             </div>
@@ -73,8 +73,8 @@
       <!-- 中间时间线编辑区域 -->
       <div class="timeline-area">
         <VideoTimelineEditor
-          ref="timelineEditorRef"
           v-if="storyboards.length > 0"
+          ref="timelineEditorRef"
           :scenes="storyboards"
           :episode-id="episodeId.toString()"
           :drama-id="dramaId.toString()"
@@ -95,9 +95,9 @@
         <el-tabs v-model="activeTab" class="edit-tabs">
           <!-- 镜头属性标签 -->
           <el-tab-pane
+            v-if="currentStoryboard"
             :label="$t('storyboard.shotProperties')"
             name="shot"
-            v-if="currentStoryboard"
           >
             <div v-if="currentStoryboard" class="shot-editor-new">
               <!-- 场景(Scene) -->
@@ -112,8 +112,8 @@
                   >
                 </div>
                 <div
-                  class="scene-preview"
                   v-if="hasImage(currentStoryboard.background)"
+                  class="scene-preview"
                   @click="showSceneImage"
                 >
                   <img
@@ -132,7 +132,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="scene-preview-empty" v-else>
+                <div v-else class="scene-preview-empty">
                   <el-icon :size="48" color="#666">
                     <Picture />
                   </el-icon>
@@ -175,8 +175,8 @@
                     <div class="cast-name">{{ char.name }}</div>
                     <div
                       class="cast-remove"
-                      @click.stop="toggleCharacterInShot(char.id)"
                       :title="$t('editor.removeCharacter')"
+                      @click.stop="toggleCharacterInShot(char.id)"
                     >
                       <el-icon :size="14">
                         <Close />
@@ -226,8 +226,8 @@
                     <div class="cast-name">{{ prop.name }}</div>
                     <div
                       class="cast-remove"
-                      @click.stop="togglePropInShot(prop.id)"
                       title="移除道具"
+                      @click.stop="togglePropInShot(prop.id)"
                     >
                       <el-icon :size="14">
                         <Close />
@@ -430,7 +430,7 @@
 
           <!-- 图片生成标签 -->
           <el-tab-pane :label="$t('editor.shotImage')" name="image">
-            <div class="tab-content" v-if="currentStoryboard">
+            <div v-if="currentStoryboard" class="tab-content">
               <div class="image-generation-section">
                 <!-- 帧类型选择 -->
                 <div class="frame-type-selector">
@@ -489,8 +489,8 @@
                           selectedFrameType,
                         )
                       "
-                      @click="extractFramePrompt"
                       style="margin-left: 10px"
+                      @click="extractFramePrompt"
                     >
                       {{ $t("editor.extractPrompt") }}
                     </el-button>
@@ -525,10 +525,10 @@
 
                 <!-- 生成结果 -->
                 <div
-                  class="generation-result"
                   v-if="
                     generatedImages.length > 0 || selectedFrameType === 'action'
                   "
+                  class="generation-result"
                 >
                   <div class="section-label">
                     {{ $t("editor.generationResult") }} ({{
@@ -586,7 +586,7 @@
                           </el-icon>
                           <p>{{ getStatusText(img.status) }}</p>
                         </div>
-                        <div class="image-actions" v-if="hasImage(img)">
+                        <div v-if="hasImage(img)" class="image-actions">
                           <!-- 动作序列图片裁剪图标 -->
                           <div
                             v-if="img.frame_type === 'action' && hasImage(img)"
@@ -625,7 +625,7 @@
 
           <!-- 视频生成标签 -->
           <el-tab-pane :label="$t('video.videoGeneration')" name="video">
-            <div class="tab-content" v-if="currentStoryboard">
+            <div v-if="currentStoryboard" class="tab-content">
               <div class="video-generation-section">
                 <!-- 生成提示词展示 -->
                 <div class="video-prompt-box">
@@ -880,7 +880,6 @@
                           />
                           <div
                             class="preview-icon"
-                            @click.stop="previewImage(getImageUrl(img))"
                             style="
                               position: absolute;
                               top: 4px;
@@ -895,6 +894,7 @@
                               cursor: pointer;
                               z-index: 10;
                             "
+                            @click.stop="previewImage(getImageUrl(img))"
                           >
                             <el-icon :size="14" color="#fff">
                               <ZoomIn />
@@ -962,7 +962,6 @@
                           />
                           <div
                             class="preview-icon"
-                            @click.stop="previewImage(getImageUrl(img))"
                             style="
                               position: absolute;
                               top: 4px;
@@ -977,6 +976,7 @@
                               cursor: pointer;
                               z-index: 10;
                             "
+                            @click.stop="previewImage(getImageUrl(img))"
                           >
                             <el-icon :size="14" color="#fff">
                               <ZoomIn />
@@ -1044,7 +1044,6 @@
                           />
                           <div
                             class="preview-icon"
-                            @click.stop="previewImage(getImageUrl(img))"
                             style="
                               position: absolute;
                               top: 4px;
@@ -1059,6 +1058,7 @@
                               cursor: pointer;
                               z-index: 10;
                             "
+                            @click.stop="previewImage(getImageUrl(img))"
                           >
                             <el-icon :size="14" color="#fff">
                               <ZoomIn />
@@ -1126,7 +1126,6 @@
                           />
                           <div
                             class="preview-icon"
-                            @click.stop="previewImage(getImageUrl(img))"
                             style="
                               position: absolute;
                               top: 4px;
@@ -1141,6 +1140,7 @@
                               cursor: pointer;
                               z-index: 10;
                             "
+                            @click.stop="previewImage(getImageUrl(img))"
                           >
                             <el-icon :size="14" color="#fff">
                               <ZoomIn />
@@ -1208,7 +1208,6 @@
                           />
                           <div
                             class="preview-icon"
-                            @click.stop="previewImage(getImageUrl(img))"
                             style="
                               position: absolute;
                               top: 4px;
@@ -1223,6 +1222,7 @@
                               cursor: pointer;
                               z-index: 10;
                             "
+                            @click.stop="previewImage(getImageUrl(img))"
                           >
                             <el-icon :size="14" color="#fff">
                               <ZoomIn />
@@ -1490,8 +1490,8 @@
 
                 <!-- 生成的视频列表 -->
                 <div
-                  class="generation-result"
                   v-if="generatedVideos.length > 0"
+                  class="generation-result"
                   style="margin-top: 24px"
                 >
                   <div
@@ -1541,16 +1541,16 @@
                             @click.stop="addVideoToAssets(video)"
                           >
                             <el-icon
+                              v-if="!addingToAssets.has(video.id)"
                               :size="18"
                               color="var(--text-primary)"
-                              v-if="!addingToAssets.has(video.id)"
                             >
                               <FolderAdd />
                             </el-icon>
                             <el-icon
+                              v-else
                               :size="18"
                               color="var(--text-primary)"
-                              v-else
                               class="is-loading"
                             >
                               <Loading />
@@ -1586,7 +1586,7 @@
           <!-- 视频合成列表标签 -->
           <el-tab-pane :label="$t('video.videoMerge')" name="merges">
             <div class="tab-content">
-              <div class="merges-list" v-loading="loadingMerges">
+              <div v-loading="loadingMerges" class="merges-list">
                 <el-empty
                   v-if="videoMerges.length === 0"
                   :description="$t('video.noMergeRecords')"
@@ -1690,7 +1690,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="detail-item" v-if="merge.completed_at">
+                        <div v-if="merge.completed_at" class="detail-item">
                           <div class="detail-icon">
                             <el-icon :size="16">
                               <Check />
@@ -1707,8 +1707,8 @@
 
                       <!-- 错误提示 -->
                       <div
-                        class="merge-error"
                         v-if="merge.status === 'failed' && merge.error_msg"
+                        class="merge-error"
                       >
                         <el-alert type="error" :closable="false" show-icon>
                           <template #title>
@@ -1729,17 +1729,17 @@
                           <el-button
                             type="primary"
                             :icon="VideoCamera"
+                            round
                             @click="
                               downloadVideo(merge.merged_url, merge.title)
                             "
-                            round
                           >
                             下载视频
                           </el-button>
                           <el-button
                             :icon="View"
-                            @click="previewMergedVideo(merge.merged_url)"
                             round
+                            @click="previewMergedVideo(merge.merged_url)"
                           >
                             在线预览
                           </el-button>
@@ -1747,8 +1747,8 @@
                         <el-button
                           type="danger"
                           :icon="Delete"
-                          @click="deleteMerge(merge.id)"
                           round
+                          @click="deleteMerge(merge.id)"
                         >
                           删除
                         </el-button>
@@ -1769,7 +1769,7 @@
       :title="previewCharacter?.name"
       width="600px"
     >
-      <div class="character-image-preview" v-if="previewCharacter">
+      <div v-if="previewCharacter" class="character-image-preview">
         <img
           v-if="previewCharacter.local_path"
           :src="getImageUrl(previewCharacter)"
@@ -1791,8 +1791,8 @@
       width="800px"
     >
       <div
-        class="scene-image-preview"
         v-if="currentStoryboard?.background?.image_url"
+        class="scene-image-preview"
       >
         <img :src="currentStoryboard.background.image_url" alt="场景" />
       </div>
@@ -1824,7 +1824,7 @@
             <div class="character-name">{{ char.name }}</div>
             <div class="character-role">{{ char.role || "角色" }}</div>
           </div>
-          <div class="character-check" v-if="isCharacterInCurrentShot(char.id)">
+          <div v-if="isCharacterInCurrentShot(char.id)" class="character-check">
             <el-icon color="#409eff" :size="24">
               <Check />
             </el-icon>
@@ -1869,7 +1869,7 @@
               {{ prop.type || $t("editor.props") }}
             </div>
           </div>
-          <div class="character-check" v-if="isPropInCurrentShot(prop.id)">
+          <div v-if="isPropInCurrentShot(prop.id)" class="character-check">
             <el-icon color="#409eff" :size="24">
               <Check />
             </el-icon>
@@ -1925,7 +1925,7 @@
       :close-on-click-modal="true"
       destroy-on-close
     >
-      <div class="video-preview-container" v-if="previewVideo">
+      <div v-if="previewVideo" class="video-preview-container">
         <video
           v-if="previewVideo.video_url"
           :src="getVideoUrl(previewVideo)"
@@ -1968,7 +1968,7 @@
             <el-button
               v-if="previewVideo.video_url"
               size="small"
-              @click="window.open(previewVideo.video_url, '_blank')"
+              @click="openUrl(previewVideo.video_url)"
             >
               {{ $t("professionalEditor.downloadVideo") }}
             </el-button>
@@ -2071,9 +2071,9 @@ const route = useRoute();
 const router = useRouter();
 const { t: $t } = useI18n();
 
-const dramaId = Number(route.params.dramaId);
+const dramaId = route.params.dramaId as string;
 const episodeNumber = Number(route.params.episodeNumber);
-const episodeId = ref<number>(0);
+const episodeId = ref<string | number>(0);
 
 const drama = ref<Drama | null>(null);
 const episode = ref<Episode | null>(null);
@@ -2418,7 +2418,7 @@ const availableReferenceModes = computed(() => {
 
 // 帧提示词存储key生成函数
 const getPromptStorageKey = (
-  storyboardId: number | undefined,
+  storyboardId: string | number | undefined,
   frameType: FrameType,
 ) => {
   if (!storyboardId) return null;
@@ -2876,7 +2876,7 @@ const extractFramePrompt = async () => {
 
 // 检查是否正在生成提示词
 const isGeneratingPrompt = (
-  storyboardId: number | undefined,
+  storyboardId: string | number | undefined,
   frameType: string,
 ) => {
   if (!storyboardId) return false;
@@ -3441,7 +3441,7 @@ const generateVideo = async () => {
 };
 
 // 加载分镜的视频参考图片（所有帧类型）
-const loadVideoReferenceImages = async (storyboardId: number) => {
+const loadVideoReferenceImages = async (storyboardId: string | number) => {
   try {
     const result = await imageAPI.listImages({
       storyboard_id: storyboardId,
@@ -3455,11 +3455,11 @@ const loadVideoReferenceImages = async (storyboardId: number) => {
 };
 
 // 加载分镜的视频列表
-const loadStoryboardVideos = async (storyboardId: number) => {
+const loadStoryboardVideos = async (storyboardId: string | number) => {
   loadingVideos.value = true;
   try {
     const result = await videoAPI.listVideos({
-      storyboard_id: storyboardId.toString(),
+      storyboard_id: storyboardId,
       page: 1,
       page_size: 50,
     });
@@ -3638,7 +3638,7 @@ const removeCharacterFromShot = async (charId: number) => {
 const loadData = async () => {
   try {
     // 加载剧集信息
-    const dramaRes = await dramaAPI.get(dramaId.toString());
+    const dramaRes = await dramaAPI.get(dramaId);
     drama.value = dramaRes;
 
     // 找到当前章节
@@ -3655,14 +3655,14 @@ const loadData = async () => {
     episodeId.value = ep.id;
 
     // 加载分镜列表
-    const storyboardsRes = await dramaAPI.getStoryboards(ep.id.toString());
+    const storyboardsRes = await dramaAPI.getStoryboards(String(ep.id));
 
     // API返回格式: {storyboards: [...], total: number}
     storyboards.value = storyboardsRes?.storyboards || [];
 
     // 默认选中第一个分镜
     if (storyboards.value.length > 0 && !currentStoryboardId.value) {
-      currentStoryboardId.value = storyboards.value[0].id;
+      currentStoryboardId.value = String(storyboards.value[0].id);
     }
 
     // 加载角色列表
@@ -3699,8 +3699,8 @@ const selectScene = async (sceneId: number) => {
   }
 };
 
-const selectStoryboard = (id: string) => {
-  currentStoryboardId.value = id;
+const selectStoryboard = (id: string | number) => {
+  currentStoryboardId.value = String(id);
 };
 
 const handleTimelineSelect = (sceneId: number) => {
@@ -3926,7 +3926,7 @@ const handleAddStoryboard = async () => {
         : 1;
 
     await dramaAPI.createStoryboard({
-      episode_id: parseInt(episodeId.value),
+      episode_id: episodeId.value,
       storyboard_number: nextShotNumber,
       title: `镜头 ${nextShotNumber}`,
       description: "新镜头描述",
@@ -3968,9 +3968,8 @@ const handleDeleteStoryboard = async (storyboard: any) => {
     ElMessage.success("删除分镜成功");
 
     // If deleted current storyboard, clear selection or select another
-    if (currentStoryboardId.value === storyboard.id) {
-      currentStoryboardId.value = undefined;
-      currentStoryboard.value = undefined;
+    if (currentStoryboardId.value === String(storyboard.id)) {
+      currentStoryboardId.value = null;
     }
 
     await loadData();
@@ -4133,6 +4132,10 @@ const deleteMerge = async (mergeId: number) => {
       ElMessage.error(error.response?.data?.message || "删除失败");
     }
   }
+};
+
+const openUrl = (url: string) => {
+  window.open(url, "_blank");
 };
 
 // 格式化日期时间

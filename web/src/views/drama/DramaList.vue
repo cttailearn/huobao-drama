@@ -16,8 +16,8 @@
         <template #right>
           <el-button
             type="primary"
-            @click="handleCreate"
             class="header-btn primary"
+            @click="handleCreate"
           >
             <el-icon>
               <Plus />
@@ -60,6 +60,11 @@
         >
           <template #actions>
             <ActionButton
+              :icon="Setting"
+              tooltip="项目工作台"
+              @click="openWorkbench(drama.id)"
+            />
+            <ActionButton
               :icon="Edit"
               :tooltip="$t('common.edit')"
               @click="editDrama(drama.id)"
@@ -87,9 +92,9 @@
         class="edit-dialog"
       >
         <el-form
+          v-loading="editLoading"
           :model="editForm"
           label-position="top"
-          v-loading="editLoading"
           class="edit-form"
         >
           <el-form-item :label="$t('drama.projectName')" required>
@@ -138,14 +143,14 @@
         </el-form>
         <template #footer>
           <div class="dialog-footer">
-            <el-button @click="editDialogVisible = false" size="large">{{
+            <el-button size="large" @click="editDialogVisible = false">{{
               $t("common.cancel")
             }}</el-button>
             <el-button
               type="primary"
-              @click="saveEdit"
               :loading="editLoading"
               size="large"
+              @click="saveEdit"
             >
               {{ $t("common.save") }}
             </el-button>
@@ -205,9 +210,7 @@ import {
   Film,
   Setting,
   Edit,
-  View,
   Delete,
-  InfoFilled,
 } from "@element-plus/icons-vue";
 import { dramaAPI } from "@/api/drama";
 import type { Drama, DramaListQuery } from "@/types/drama";
@@ -248,7 +251,8 @@ const loadDramas = async () => {
 
 // Navigation handlers / 导航处理
 const handleCreate = () => (createDialogVisible.value = true);
-const viewDrama = (id: string) => router.push(`/dramas/${id}`);
+const viewDrama = (id: string | number) => router.push(`/dramas/${String(id)}`);
+const openWorkbench = (id: string | number) => router.push(`/dramas/${String(id)}/workbench`);
 
 // Edit dialog state / 编辑对话框状态
 const editDialogVisible = ref(false);
@@ -261,13 +265,13 @@ const editForm = ref({
 });
 
 // Open edit dialog / 打开编辑对话框
-const editDrama = async (id: string) => {
+const editDrama = async (id: string | number) => {
   editLoading.value = true;
   editDialogVisible.value = true;
   try {
     const drama = await dramaAPI.get(id);
     editForm.value = {
-      id: drama.id,
+      id: String(drama.id),
       title: drama.title,
       description: drama.description || "",
       style: drama.style || "ghibli",
@@ -305,7 +309,7 @@ const saveEdit = async () => {
 };
 
 // Delete drama / 删除短剧
-const deleteDrama = async (id: string) => {
+const deleteDrama = async (id: string | number) => {
   try {
     await dramaAPI.delete(id);
     ElMessage.success("删除成功");

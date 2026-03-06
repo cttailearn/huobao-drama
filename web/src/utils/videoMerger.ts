@@ -9,7 +9,28 @@ export interface VideoClip {
   transition?: TransitionEffect
 }
 
-export type TransitionType = 'fade' | 'fadeblack' | 'fadewhite' | 'slideleft' | 'slideright' | 'slideup' | 'slidedown' | 'wipeleft' | 'wiperight' | 'circleopen' | 'circleclose' | 'none'
+export type TransitionType =
+  | 'fade'
+  | 'fadeblack'
+  | 'fadewhite'
+  | 'fadegrays'
+  | 'slideleft'
+  | 'slideright'
+  | 'slideup'
+  | 'slidedown'
+  | 'wipeleft'
+  | 'wiperight'
+  | 'wipeup'
+  | 'wipedown'
+  | 'circleopen'
+  | 'circleclose'
+  | 'dissolve'
+  | 'distance'
+  | 'horzopen'
+  | 'horzclose'
+  | 'vertopen'
+  | 'vertclose'
+  | 'none'
 
 export interface TransitionEffect {
   type: TransitionType
@@ -229,7 +250,7 @@ class VideoMerger {
 
     // 读取输出文件
     const data = await this.ffmpeg.readFile('output.mp4')
-    const blob = new Blob([data], { type: 'video/mp4' })
+    const blob = new Blob([data as unknown as BlobPart], { type: 'video/mp4' })
 
     // 清理临时文件
     for (const file of inputFiles) {

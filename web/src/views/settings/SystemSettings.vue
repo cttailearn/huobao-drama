@@ -11,8 +11,8 @@
         <el-form-item :label="$t('settings.currentLanguage')">
           <el-radio-group 
             v-model="currentLanguage" 
-            @change="handleLanguageChange"
             :disabled="loading"
+            @change="handleLanguageChange"
           >
             <el-radio label="zh">简体中文</el-radio>
             <el-radio label="en">English</el-radio>

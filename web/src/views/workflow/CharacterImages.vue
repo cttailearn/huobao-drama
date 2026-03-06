@@ -1,15 +1,15 @@
 <template>
   <div class="character-images-container">
-    <el-page-header @back="goBack" title="返回项目">
+    <el-page-header title="返回项目" @back="goBack">
       <template #content>
         <h2>角色形象生成</h2>
       </template>
       <template #extra>
         <el-button
           type="primary"
-          @click="batchGenerate"
           :loading="batchGenerating"
           :disabled="selectedCharacters.length === 0"
+          @click="batchGenerate"
         >
           <el-icon><Picture /></el-icon>
           批量生成 ({{ selectedCharacters.length }})
@@ -25,8 +25,8 @@
       <div class="toolbar">
         <el-checkbox
           v-model="selectAll"
-          @change="handleSelectAll"
           :indeterminate="isIndeterminate"
+          @change="handleSelectAll"
         >
           全选
         </el-checkbox>
@@ -38,7 +38,7 @@
 
       <div class="character-list">
         <el-row :gutter="20">
-          <el-col :span="6" v-for="character in characters" :key="character.id">
+          <el-col v-for="character in characters" :key="character.id" :span="6">
             <el-card
               shadow="hover"
               class="character-card"
@@ -71,7 +71,6 @@
 
               <el-button
                 type="primary"
-                @click="generateImage(character)"
                 :loading="generatingIds.includes(character.id)"
                 :disabled="
                   batchGenerating ||
@@ -79,6 +78,7 @@
                     !generatingIds.includes(character.id))
                 "
                 style="width: 100%"
+                @click="generateImage(character)"
               >
                 <span v-if="generatingIds.includes(character.id)"
                   >生成中...</span
@@ -96,8 +96,8 @@
         <el-button
           type="success"
           size="large"
-          @click="goToNextStep"
           :disabled="!allImagesGenerated"
+          @click="goToNextStep"
         >
           完成并返回项目
         </el-button>
@@ -176,17 +176,9 @@ const generateImage = async (character: Character) => {
 
   generatingIds.value.push(character.id);
   try {
-    const result = await characterLibraryAPI.generateCharacterImage(
-      character.id as string,
-    );
-
-    // 更新角色图片
-    const index = characters.value.findIndex((c) => c.id === character.id);
-    if (index !== -1) {
-      characters.value[index].image_url = result.image_url;
-    }
-
-    ElMessage.success(`${character.name}的形象生成成功`);
+    await characterLibraryAPI.generateCharacterImage(character.id as string);
+    ElMessage.success(`${character.name}的形象生成任务已提交`);
+    startPolling();
   } catch (error: any) {
     ElMessage.error(
       error.response?.data?.message || `${character.name}生成失败`,

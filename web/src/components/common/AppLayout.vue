@@ -5,13 +5,13 @@
       <div class="header-content">
         <div class="header-left">
           <router-link to="/" class="logo">
-            <span class="logo-text">🎬 HuoBao Drama</span>
+            <span class="logo-text">🎬 星月 Studio</span>
           </router-link>
         </div>
         <div class="header-right">
           <LanguageSwitcher />
           <ThemeToggle />
-          <el-button @click="showAIConfig = true" class="header-btn">
+          <el-button class="header-btn" @click="showAIConfig = true">
             <el-icon><Setting /></el-icon>
             <span class="btn-text">{{ $t('drama.aiConfig') }}</span>
           </el-button>

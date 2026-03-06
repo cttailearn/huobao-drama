@@ -1,6 +1,6 @@
 <template>
   <div class="image-generation-container">
-    <el-page-header @back="goBack" class="page-header">
+    <el-page-header class="page-header" @back="goBack">
       <template #content>
         <div class="header-content">
           <h2>{{ $t('image.title') }}</h2>
@@ -42,7 +42,7 @@
       </el-form>
     </el-card>
 
-    <el-row :gutter="16" v-loading="loading">
+    <el-row v-loading="loading" :gutter="16">
       <el-col
         v-for="image in images"
         :key="image.id"
@@ -141,9 +141,9 @@
       :total="total"
       :page-sizes="[12, 24, 36, 48]"
       layout="total, sizes, prev, pager, next, jumper"
+      class="pagination"
       @current-change="loadImages"
       @size-change="loadImages"
-      class="pagination"
     />
 
     <GenerateImageDialog

@@ -56,7 +56,7 @@
         <!-- 缩放控制区域 -->
         <div class="zoom-control">
           <div class="slider-box">
-            <el-button :icon="ZoomIn" circle @click="handleZoomIn" :disabled="zoomLevel >= 200" />
+            <el-button :icon="ZoomIn" circle :disabled="zoomLevel >= 200" @click="handleZoomIn" />
             <el-slider
               v-model="zoomLevel"
               :min="50"
@@ -66,14 +66,14 @@
               height="300px"
               @change="handleZoomChange"
             />
-            <el-button :icon="ZoomOut" circle @click="handleZoomOut" :disabled="zoomLevel <= 50" />
+            <el-button :icon="ZoomOut" circle :disabled="zoomLevel <= 50" @click="handleZoomOut" />
             <div class="zoom-label">{{ zoomLevel }}%</div>
           </div>
 
           <div class="crop-actions">
             <!-- 裁剪和重置按钮 -->
-            <el-button :icon="Crop" circle type="primary" @click="cropImage" :disabled="!canCrop" title="裁剪" />
-            <el-button :icon="RefreshLeft" circle @click="resetCrop" title="重置" style="margin: 0" />
+            <el-button :icon="Crop" circle type="primary" :disabled="!canCrop" title="裁剪" @click="cropImage" />
+            <el-button :icon="RefreshLeft" circle title="重置" style="margin: 0" @click="resetCrop" />
           </div>
         </div>
 
@@ -126,7 +126,7 @@
 
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" @click="handleSave" :loading="saving"> 保存 </el-button>
+      <el-button type="primary" :loading="saving" @click="handleSave"> 保存 </el-button>
     </template>
   </el-dialog>
 </template>

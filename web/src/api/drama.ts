@@ -24,15 +24,15 @@ export const dramaAPI = {
     return request.post<Drama>('/dramas', data)
   },
 
-  get(id: string) {
+  get(id: string | number) {
     return request.get<Drama>(`/dramas/${id}`)
   },
 
-  update(id: string, data: UpdateDramaRequest) {
+  update(id: string | number, data: UpdateDramaRequest) {
     return request.put<Drama>(`/dramas/${id}`, data)
   },
 
-  delete(id: string) {
+  delete(id: string | number) {
     return request.delete(`/dramas/${id}`)
   },
 
@@ -40,18 +40,18 @@ export const dramaAPI = {
     return request.get<DramaStats>('/dramas/stats')
   },
 
-  saveOutline(id: string, data: { title: string; summary: string; genre?: string; tags?: string[] }) {
+  saveOutline(id: string | number, data: { title: string; summary: string; genre?: string; tags?: string[] }) {
     return request.put(`/dramas/${id}/outline`, data)
   },
 
-  getCharacters(dramaId: string) {
+  getCharacters(dramaId: string | number) {
     return request.get(`/dramas/${dramaId}/characters`)
   },
 
-  saveCharacters(id: string, data: any[], episodeId?: string) {
+  saveCharacters(id: string | number, data: any[], episodeId?: string | number) {
     return request.put(`/dramas/${id}/characters`, {
       characters: data,
-      episode_id: episodeId ? parseInt(episodeId) : undefined
+      episode_id: episodeId != null ? parseInt(String(episodeId)) : undefined
     })
   },
 
@@ -59,11 +59,11 @@ export const dramaAPI = {
     return request.put(`/characters/${id}`, data)
   },
 
-  saveEpisodes(id: string, data: any[]) {
+  saveEpisodes(id: string | number, data: any[]) {
     return request.put(`/dramas/${id}/episodes`, { episodes: data })
   },
 
-  saveProgress(id: string, data: { current_step: string; step_data?: any }) {
+  saveProgress(id: string | number, data: { current_step: string; step_data?: any }) {
     return request.put(`/dramas/${id}/progress`, data)
   },
 
@@ -83,7 +83,7 @@ export const dramaAPI = {
     return request.post(`/images/episode/${episodeId}/batch`)
   },
 
-  generateSingleBackground(backgroundId: number, dramaId: string, prompt: string) {
+  generateSingleBackground(backgroundId: number, dramaId: string | number, prompt: string) {
     return request.post('/images', {
       background_id: backgroundId,
       drama_id: dramaId,
@@ -116,8 +116,8 @@ export const dramaAPI = {
   },
 
   createScene(data: {
-    drama_id: number;
-    episode_id?: number;
+    drama_id: string | number;
+    episode_id?: string | number;
     location: string;
     time?: string;
     prompt?: string;
@@ -128,7 +128,7 @@ export const dramaAPI = {
     return request.post('/scenes', data)
   },
 
-  generateSceneImage(data: { scene_id: number; prompt?: string; model?: string }) {
+  generateSceneImage(data: { scene_id: string | number; prompt?: string; model?: string }) {
     return request.post<{ image_generation: { id: number } }>('/scenes/generate-image', data)
   },
 
@@ -141,18 +141,18 @@ export const dramaAPI = {
   },
 
   // 完成集数制作（触发视频合成）
-  finalizeEpisode(episodeId: string, timelineData?: any) {
+  finalizeEpisode(episodeId: string | number, timelineData?: any) {
     return request.post(`/episodes/${episodeId}/finalize`, timelineData || {})
   },
 
   createStoryboard(data: {
-    episode_id: number;
+    episode_id: string | number;
     storyboard_number: number;
     title?: string;
     description?: string;
     action?: string;
     dialogue?: string;
-    scene_id?: number;
+    scene_id?: string | number;
     duration: number;
   }) {
     return request.post('/storyboards', data)

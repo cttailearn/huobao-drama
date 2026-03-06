@@ -19,3 +19,11 @@ func NewResourceTransferService(db *gorm.DB, log *logger.Logger) *ResourceTransf
 
 // ResourceTransferService 现在只保留基本结构，MinIO相关功能已移除
 // 如需资源转存功能，请使用本地存储
+
+func (s *ResourceTransferService) BatchTransferImagesToMinio(dramaID string, limit int) (int, error) {
+	return 0, nil
+}
+
+func (s *ResourceTransferService) BatchTransferVideosToMinio(dramaID string, limit int) (int, error) {
+	return 0, nil
+}

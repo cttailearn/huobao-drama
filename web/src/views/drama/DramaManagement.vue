@@ -4,7 +4,7 @@
       <!-- Page Header / 页面头部 -->
       <AppHeader :fixed="false" :show-logo="false">
         <template #left>
-          <el-button text @click="$router.back()" class="back-btn">
+          <el-button text class="back-btn" @click="$router.back()">
             <el-icon><ArrowLeft /></el-icon>
             <span>{{ $t("common.back") }}</span>
           </el-button>
@@ -76,8 +76,8 @@
                 <el-button
                   type="primary"
                   :icon="Plus"
-                  @click="createNewEpisode"
                   style="margin-top: 8px"
+                  @click="createNewEpisode"
                 >
                   {{ $t("drama.management.createFirstEpisode") }}
                 </el-button>
@@ -115,6 +115,50 @@
                   }}</span>
                 </el-descriptions-item>
               </el-descriptions>
+            </el-card>
+
+            <el-card shadow="never" class="project-info-card novel-overview-card">
+              <template #header>
+                <div class="card-header">
+                  <h3 class="card-title">AI小说</h3>
+                  <div style="display: flex; gap: 8px">
+                    <el-button size="small" @click="goNovelStudio">进入AI小说工作区</el-button>
+                    <el-button
+                      size="small"
+                      type="success"
+                      :disabled="!selectedNovelId"
+                      @click="applySelectedNovelToDrama"
+                    >
+                      应用小说到短剧
+                    </el-button>
+                  </div>
+                </div>
+              </template>
+              <template v-if="projectNovels.length > 0">
+                <div class="novel-overview-top">
+                  <el-select v-model="selectedNovelId" style="width: 320px" placeholder="选择项目内小说">
+                    <el-option v-for="item in projectNovels" :key="item.id" :label="item.title" :value="Number(item.id)" />
+                  </el-select>
+                  <el-tag type="info">{{ projectNovels.length }} 部小说</el-tag>
+                </div>
+                <div v-if="selectedNovelDetail" class="novel-overview-detail">
+                  <el-descriptions :column="3" border>
+                    <el-descriptions-item label="小说标题">{{ selectedNovelDetail.title }}</el-descriptions-item>
+                    <el-descriptions-item label="类型">{{ selectedNovelDetail.genre }}</el-descriptions-item>
+                    <el-descriptions-item label="进度">{{ novelReadyChapterCount }} / {{ selectedNovelDetail.chapter_count }} 章</el-descriptions-item>
+                  </el-descriptions>
+                  <div class="novel-setup-preview">
+                    <div class="preview-title">设定摘要</div>
+                    <div class="preview-content">{{ novelSetupPreview }}</div>
+                  </div>
+                  <div class="novel-flow-tip">
+                    你可以先使用AI小说生成，再一键应用到短剧；也可以直接在章节管理中手动创建短剧内容。
+                  </div>
+                </div>
+              </template>
+              <el-empty v-else description="当前项目暂无AI小说，可按需创建" :image-size="80">
+                <el-button type="primary" @click="goNovelStudio">创建项目小说</el-button>
+              </el-empty>
             </el-card>
           </el-tab-pane>
 
@@ -227,9 +271,9 @@
 
             <el-row :gutter="16" style="margin-top: 16px">
               <el-col
-                :span="6"
                 v-for="character in drama?.characters"
                 :key="character.id"
+                :span="6"
               >
                 <el-card shadow="hover" class="character-card">
                   <div class="character-preview">
@@ -298,7 +342,7 @@
             </div>
 
             <el-row :gutter="16" style="margin-top: 16px">
-              <el-col :span="6" v-for="scene in scenes" :key="scene.id">
+              <el-col v-for="scene in scenes" :key="scene.id" :span="6">
                 <el-card shadow="hover" class="scene-card">
                   <div class="scene-preview">
                     <ImagePreview
@@ -358,7 +402,7 @@
             </div>
 
             <el-row :gutter="16" style="margin-top: 16px">
-              <el-col :span="6" v-for="prop in drama?.props" :key="prop.id">
+              <el-col v-for="prop in drama?.props" :key="prop.id" :span="6">
                 <el-card shadow="hover" class="scene-card">
                   <div class="scene-preview">
                     <ImagePreview
@@ -371,7 +415,7 @@
 
                   <div class="scene-info">
                     <h4>{{ prop.name }}</h4>
-                    <el-tag size="small" v-if="prop.type">{{
+                    <el-tag v-if="prop.type" size="small">{{
                       prop.type
                     }}</el-tag>
                     <p class="desc">{{ prop.description || prop.prompt }}</p>
@@ -383,8 +427,8 @@
                     }}</el-button>
                     <el-button
                       size="small"
-                      @click="generatePropImage(prop)"
                       :disabled="!prop.prompt"
+                      @click="generatePropImage(prop)"
                       >{{ $t("prop.generateImage") }}</el-button
                     >
                     <el-button
@@ -675,8 +719,8 @@
           }}</el-button>
           <el-button
             type="primary"
-            @click="handleExtractProps"
             :disabled="!selectedExtractEpisodeId"
+            @click="handleExtractProps"
             >{{ $t("prop.startExtract") }}</el-button
           >
         </template>
@@ -716,8 +760,8 @@
           }}</el-button>
           <el-button
             type="primary"
-            @click="handleExtractCharacters"
             :disabled="!selectedExtractEpisodeId"
+            @click="handleExtractCharacters"
             >{{ $t("prop.startExtract") }}</el-button
           >
         </template>
@@ -757,8 +801,8 @@
           }}</el-button>
           <el-button
             type="primary"
-            @click="handleExtractScenes"
             :disabled="!selectedExtractEpisodeId"
+            @click="handleExtractScenes"
             >{{ $t("prop.startExtract") }}</el-button
           >
         </template>
@@ -780,9 +824,11 @@ import {
   Box,
 } from "@element-plus/icons-vue";
 import { dramaAPI } from "@/api/drama";
+import { novelAPI } from "@/api/novel";
 import { characterLibraryAPI } from "@/api/character-library";
 import { propAPI } from "@/api/prop";
 import type { Drama } from "@/types/drama";
+import type { Novel } from "@/types/novel";
 import {
   AppHeader,
   StatCard,
@@ -797,6 +843,9 @@ const route = useRoute();
 const drama = ref<Drama>();
 const activeTab = ref((route.query.tab as string) || "overview");
 const scenes = ref<any[]>([]);
+const projectNovels = ref<Novel[]>([]);
+const selectedNovelId = ref<number | null>(null);
+const selectedNovelDetail = ref<Novel | null>(null);
 
 let pollingTimer: any = null; // Add polling timer definition
 
@@ -810,7 +859,7 @@ const extractScenesDialogVisible = ref(false);
 const editingCharacter = ref<any>(null);
 const editingScene = ref<any>(null);
 const editingProp = ref<any>(null);
-const selectedExtractEpisodeId = ref<number | null>(null);
+const selectedExtractEpisodeId = ref<string | number | null>(null);
 
 const newCharacter = ref({
   name: "",
@@ -842,6 +891,17 @@ const episodesCount = computed(() => drama.value?.episodes?.length || 0);
 const charactersCount = computed(() => drama.value?.characters?.length || 0);
 const scenesCount = computed(() => scenes.value.length);
 const propsCount = computed(() => drama.value?.props?.length || 0);
+const novelReadyChapterCount = computed(
+  () =>
+    selectedNovelDetail.value?.chapters?.filter(
+      (ch) => !!((ch.final_content && ch.final_content.trim()) || (ch.draft_content && ch.draft_content.trim())),
+    ).length || 0,
+);
+const novelSetupPreview = computed(() => {
+  const text = selectedNovelDetail.value?.setup_content || "";
+  if (!text.trim()) return "暂无设定内容";
+  return text.length > 180 ? `${text.slice(0, 180)}...` : text;
+});
 
 const sortedEpisodes = computed(() => {
   if (!drama.value?.episodes) return [];
@@ -880,8 +940,39 @@ const loadDramaData = async () => {
     const data = await dramaAPI.get(route.params.id as string);
     drama.value = data;
     loadScenes();
+    await loadProjectNovels();
   } catch (error: any) {
     ElMessage.error(error.message || "加载项目数据失败");
+  }
+};
+
+const loadProjectNovels = async () => {
+  if (!route.params.id) return;
+  const res = await novelAPI.list({ page: 1, page_size: 100, drama_id: Number(route.params.id) });
+  projectNovels.value = res.items || [];
+  if (projectNovels.value.length === 0) {
+    selectedNovelId.value = null;
+    selectedNovelDetail.value = null;
+    return;
+  }
+  if (!selectedNovelId.value || !projectNovels.value.some((item) => Number(item.id) === selectedNovelId.value)) {
+    selectedNovelId.value = Number(projectNovels.value[0].id);
+  }
+  selectedNovelDetail.value = await novelAPI.get(selectedNovelId.value);
+};
+
+const goNovelStudio = () => {
+  router.push(`/dramas/${route.params.id}/novels`);
+};
+
+const applySelectedNovelToDrama = async () => {
+  if (!selectedNovelId.value || !route.params.id) return;
+  try {
+    await novelAPI.applyToDrama(selectedNovelId.value, Number(route.params.id));
+    ElMessage.success("小说已应用到短剧章节");
+    await loadDramaData();
+  } catch (error: any) {
+    ElMessage.error(error.message || "应用失败");
   }
 };
 
@@ -996,6 +1087,7 @@ const openAddCharacterDialog = () => {
     personality: "",
     description: "",
     image_url: "",
+    local_path: "",
   };
   addCharacterDialogVisible.value = true;
 };
@@ -1196,6 +1288,7 @@ const openAddSceneDialog = () => {
     location: "",
     prompt: "",
     image_url: "",
+    local_path: "",
   };
   addSceneDialogVisible.value = true;
 };
@@ -1435,9 +1528,18 @@ const handleExtractProps = async () => {
       if (checkCount > 10) clearInterval(checkInterval);
     }, 5000);
   } catch (error: any) {
-    ElMessage.error(error.message || t("common.failed"));
+    ElMessage.error(error.message || "操作失败");
   }
 };
+
+watch(selectedNovelId, async (id, oldId) => {
+  if (!id || id === oldId) return;
+  try {
+    selectedNovelDetail.value = await novelAPI.get(id);
+  } catch (error: any) {
+    ElMessage.error(error.message || "加载小说详情失败");
+  }
+});
 
 onMounted(() => {
   loadDramaData();
@@ -1745,6 +1847,45 @@ onMounted(() => {
 .info-desc {
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+.novel-overview-card {
+  margin-top: 16px;
+}
+
+.novel-overview-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.novel-overview-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.novel-setup-preview {
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.preview-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.preview-content {
+  color: var(--el-text-color-regular);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.novel-flow-tip {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
 }
 
 .dark :deep(.el-dialog) {

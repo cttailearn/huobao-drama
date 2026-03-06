@@ -1,8 +1,8 @@
-# 🎬 Huobao Drama - AI Short Drama Production Platform
+# 🎬 XingYue Studio - AI Novel & Short Drama Production Platform
 
 <div align="center">
 
-**Full-stack AI Short Drama Automation Platform Based on Go + Vue3**
+**Full-stack AI Novel + Short Drama Automation Platform Based on Go + Vue3**
 
 [![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://golang.org)
 [![Vue Version](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat&logo=vue.js)](https://vuejs.org)
@@ -18,7 +18,7 @@
 
 ## 📖 About
 
-Huobao Drama is an AI-powered short drama production platform that automates the entire workflow from script generation, character design, storyboarding to video composition.
+XingYue Studio is an AI-powered content production platform that supports novel generation and short drama production, automating the workflow from novel planning, script generation, character design, storyboarding to video composition.
 
 火宝短剧商业版地址：[火宝短剧商业版](https://drama.chatfire.site/shortvideo)
 
@@ -141,7 +141,7 @@ Configuration file format (`configs/config.yaml`):
 
 ```yaml
 app:
-  name: "Huobao Drama API"
+  name: "XingYue Studio API"
   version: "1.0.0"
   debug: true # Set to true for development, false for production
 
@@ -426,7 +426,7 @@ Create service file `/etc/systemd/system/huobao-drama.service`:
 
 ```ini
 [Unit]
-Description=Huobao Drama Service
+Description=XingYue Studio Service
 After=network.target
 
 [Service]
@@ -635,7 +635,7 @@ Configure in 2 minutes: [API Aggregation Site](https://api.chatfire.site/models)
 
 ## 👨‍💻 About Us
 
-**AI Huobao - AI Studio Startup**
+**AI XingYue - AI Studio Startup**
 
 - 🏠 **Location**: Nanjing, China
 - 🚀 **Status**: Startup in Progress
@@ -661,6 +661,6 @@ Configure in 2 minutes: [API Aggregation Site](https://api.chatfire.site/models)
 
 [![Star History Chart](https://api.star-history.com/svg?repos=chatfire-AI/huobao-drama&type=date&legend=top-left)](https://www.star-history.com/#chatfire-AI/huobao-drama&type=date&legend=top-left)
 
-Made with ❤️ by Huobao Team
+Made with ❤️ by XingYue Team
 
 </div>

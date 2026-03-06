@@ -305,6 +305,8 @@ Each frame **must** follow these specific rules:
 - **Frame 8:** Deceleration/Follow-through
 - **Frame 9:** Complete conclusion/Return to stillness
 
+**Style Requirement:** %s
+
 **Aspect Ratio:** * %s
 
 **Output Specification:**

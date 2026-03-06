@@ -4,7 +4,7 @@
     <div class="editor-toolbar">
       <div class="toolbar-left">
         <el-button-group>
-          <el-button :icon="VideoPlay" @click="playTimeline" :disabled="timelineClips.length === 0">{{
+          <el-button :icon="VideoPlay" :disabled="timelineClips.length === 0" @click="playTimeline">{{
             $t('common.play')
           }}</el-button>
           <el-button :icon="VideoPause" @click="pauseTimeline">{{ $t('common.pause') }}</el-button>
@@ -15,9 +15,9 @@
         <el-button
           type="primary"
           :icon="VideoCamera"
-          @click="submitTimelineForMerge"
           :disabled="timelineClips.length === 0"
           :loading="serverMerging"
+          @click="submitTimelineForMerge"
         >
           {{ $t('video.merge') }}
         </el-button>
@@ -40,9 +40,9 @@
           <audio
             ref="audioPlayer"
             :src="currentAudioUrl"
+            style="display: none"
             @loadedmetadata="handleAudioLoaded"
             @ended="handleAudioEnded"
-            style="display: none"
           />
           <!-- 转场效果层 -->
           <div
@@ -58,10 +58,10 @@
             :style="{ animationDuration: transitionState.duration + 's' }"
           ></div>
           <!-- 播放/暂停图标覆盖层 -->
-          <div class="video-play-overlay" :class="{ hidden: isPlaying }" v-if="currentPreviewUrl">
+          <div v-if="currentPreviewUrl" class="video-play-overlay" :class="{ hidden: isPlaying }">
             <el-icon :size="64"><VideoPlay /></el-icon>
           </div>
-          <div class="preview-overlay" v-if="!currentPreviewUrl">
+          <div v-if="!currentPreviewUrl" class="preview-overlay">
             <el-empty :description="$t('video.dragToTimeline')" />
           </div>
         </div>
@@ -81,8 +81,8 @@
             type="primary"
             size="small"
             :icon="FolderAdd"
-            @click="addAllScenesInOrder"
             :disabled="availableStoryboards.length === 0"
+            @click="addAllScenesInOrder"
           >
             {{ $t('common.addAll') }}
           </el-button>
@@ -133,7 +133,7 @@
         </div>
       </div>
 
-      <div class="timeline-container" ref="timelineContainer">
+      <div ref="timelineContainer" class="timeline-container">
         <!-- 时间标尺 -->
         <div class="timeline-ruler" :style="{ width: timelineWidth + 'px' }">
           <div
@@ -143,7 +143,7 @@
             :style="{ left: tick.position + 'px' }"
           >
             <div class="tick-mark" :class="tick.type"></div>
-            <div class="tick-label" v-if="tick.type === 'major'">
+            <div v-if="tick.type === 'major'" class="tick-label">
               {{ formatTime(tick.time) }}
             </div>
           </div>
@@ -168,9 +168,9 @@
             <el-button
               type="text"
               size="small"
-              @click.stop="clearAllClips"
               :disabled="timelineClips.length === 0"
               :title="$t('video.clearTrack')"
+              @click.stop="clearAllClips"
             >
               <el-icon><Delete /></el-icon>
             </el-button>
@@ -228,9 +228,9 @@
             <el-button
               type="text"
               size="small"
-              @click.stop="extractAllAudio"
               :disabled="timelineClips.length === 0"
               :title="$t('video.extractAudio')"
+              @click.stop="extractAllAudio"
             >
               <el-icon><Headset /></el-icon>
             </el-button>
@@ -299,7 +299,7 @@
             <el-option label="垂直关闭" value="vertclose" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('video.transitionDuration')" v-if="editingTransition.type !== 'none'">
+        <el-form-item v-if="editingTransition.type !== 'none'" :label="$t('video.transitionDuration')">
           <el-slider
             v-model="editingTransition.duration"
             :min="0.3"
@@ -368,7 +368,7 @@
         </div>
       </div>
 
-      <template #footer v-if="!merging">
+      <template v-if="!merging" #footer>
         <el-button @click="mergeDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
@@ -400,26 +400,26 @@ import {
   Headset,
   Microphone,
 } from '@element-plus/icons-vue'
-import { videoMerger, type MergeProgress } from '@/utils/videoMerger'
+import { videoMerger, type MergeProgress, type TransitionType } from '@/utils/videoMerger'
 import { trimAndMergeVideos } from '@/utils/ffmpeg'
 import { getVideoUrl } from '@/utils/image'
 
 interface Scene {
-  id: string
-  storyboard_id: string
+  id: string | number
+  storyboard_id?: string | number
   storyboard_number: number
   title?: string
   description?: string
   location?: string
   time?: string
-  video_url: string
+  video_url?: string
   asset_id?: string
   duration?: number
 }
 
 interface TimelineClip {
   id: string
-  storyboard_id: string
+  storyboard_id: string | number
   storyboard_number: number
   video_url: string
   asset_id?: string // 素材库中的资源ID
@@ -429,28 +429,7 @@ interface TimelineClip {
   position: number // 在时间线上的位置（秒）
   order: number
   transition?: {
-    type:
-      | 'fade'
-      | 'fadeblack'
-      | 'fadewhite'
-      | 'fadegrays'
-      | 'slideleft'
-      | 'slideright'
-      | 'slideup'
-      | 'slidedown'
-      | 'wipeleft'
-      | 'wiperight'
-      | 'wipeup'
-      | 'wipedown'
-      | 'circleopen'
-      | 'circleclose'
-      | 'dissolve'
-      | 'distance'
-      | 'horzopen'
-      | 'horzclose'
-      | 'vertopen'
-      | 'vertclose'
-      | 'none'
+    type: TransitionType
     duration: number
   }
   audio_url?: string // 提取的音频URL
@@ -471,8 +450,8 @@ interface AudioClip {
 
 const props = defineProps<{
   scenes: Scene[]
-  episodeId: string
-  dramaId: string
+  episodeId: string | number
+  dramaId: string | number
   assets?: any[]
 }>()
 
@@ -843,7 +822,7 @@ const timeRulerTicks = computed(() => {
 })
 
 // 片段样式计算
-const getClipStyle = (clip: TimelineClip) => {
+const getClipStyle = (clip: { position: number; duration: number }) => {
   return {
     left: 100 + clip.position * pixelsPerSecond.value + 'px',
     width: clip.duration * pixelsPerSecond.value + 'px',
@@ -1446,7 +1425,7 @@ const handleResizeMove = (event: MouseEvent, clip: TimelineClip) => {
     }
   } else {
     // 调整结束时间
-    const scene = props.scenes.find((s) => s.id === clip.scene_id)
+    const scene = props.scenes.find((s) => s.id === clip.storyboard_id)
     const maxDuration = scene?.duration || 10
     const maxEndTime = clip.start_time + maxDuration
 
@@ -1798,7 +1777,8 @@ const handleExport = async () => {
 
     // 初始化FFmpeg
     await videoMerger.initialize((progress) => {
-      mergeProgress.value = progress
+      mergeProgressDetail.value = progress
+      mergeProgress.value = progress.progress
     })
 
     // 准备视频片段数据（包含转场信息）
