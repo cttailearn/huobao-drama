@@ -326,29 +326,6 @@ func (s *NovelService) ExportTXT(novelID uint) (string, string, error) {
 		return "", "", err
 	}
 	var builder strings.Builder
-	builder.WriteString(novel.Title)
-	builder.WriteString("\n\n")
-	builder.WriteString("类型：")
-	builder.WriteString(novel.Genre)
-	builder.WriteString("\n")
-	builder.WriteString(fmt.Sprintf("章节数：%d\n", novel.ChapterCount))
-	builder.WriteString(fmt.Sprintf("每章字数：%d\n", novel.WordsPerChapter))
-	if strings.TrimSpace(novel.Requirement) != "" {
-		builder.WriteString("大概需求：")
-		builder.WriteString(strings.TrimSpace(novel.Requirement))
-		builder.WriteString("\n")
-	}
-	builder.WriteString("\n")
-	if novel.SetupContent != nil && strings.TrimSpace(*novel.SetupContent) != "" {
-		builder.WriteString("【设定】\n")
-		builder.WriteString(strings.TrimSpace(*novel.SetupContent))
-		builder.WriteString("\n\n")
-	}
-	if novel.OutlineContent != nil && strings.TrimSpace(*novel.OutlineContent) != "" {
-		builder.WriteString("【目录】\n")
-		builder.WriteString(strings.TrimSpace(*novel.OutlineContent))
-		builder.WriteString("\n\n")
-	}
 	for _, ch := range novel.Chapters {
 		title := ch.Title
 		if strings.TrimSpace(title) == "" {
@@ -502,6 +479,7 @@ func (s *NovelService) processDraft(taskID string, novelID uint, chapterNumber i
 	if chapter.Outline != nil {
 		outline = *chapter.Outline
 	}
+	previousTail := s.getPreviousChapterTail(novelID, chapterNumber, 1200)
 	prompt := fmt.Sprintf(`请生成中文小说第%d章草稿。
 小说名：%s
 类型：%s
@@ -510,7 +488,9 @@ func (s *NovelService) processDraft(taskID string, novelID uint, chapterNumber i
 %s
 本章标题：%s
 本章概要：%s
-要求：有叙事层次、对话自然、场景清晰，输出纯正文。`, chapterNumber, novel.Title, novel.Genre, novel.WordsPerChapter, strings.TrimSpace(setup), chapter.Title, strings.TrimSpace(outline))
+上一章结尾片段（用于与本章衔接）：
+%s
+要求：有叙事层次、对话自然、场景清晰，输出纯正文。`, chapterNumber, novel.Title, novel.Genre, novel.WordsPerChapter, strings.TrimSpace(setup), chapter.Title, strings.TrimSpace(outline), strings.TrimSpace(previousTail))
 	text, err := s.generateTextWithModel(model, prompt, "你擅长写中文网络小说正文。", ai.WithMaxTokens(8000))
 	if err != nil {
 		s.taskService.UpdateTaskError(taskID, err)
@@ -622,18 +602,9 @@ func (s *NovelService) processAll(taskID string, novelID uint, model string) {
 	for idx, chapter := range novel.Chapters {
 		startProgress := 20 + int(float64(idx)/float64(total)*70)
 		s.taskService.UpdateTaskStatus(taskID, "processing", startProgress, fmt.Sprintf("正在生成第%d章草稿", chapter.ChapterNumber))
-		if chapter.DraftContent == nil || strings.TrimSpace(*chapter.DraftContent) == "" {
-			s.processDraft(taskID+"_draft_"+strconv.Itoa(chapter.ChapterNumber), novelID, chapter.ChapterNumber, model)
-		}
+		s.processDraft(taskID+"_draft_"+strconv.Itoa(chapter.ChapterNumber), novelID, chapter.ChapterNumber, model)
 		s.taskService.UpdateTaskStatus(taskID, "processing", startProgress+5, fmt.Sprintf("正在定稿第%d章", chapter.ChapterNumber))
-		var refreshed models.NovelChapter
-		if err := s.db.Where("id = ?", chapter.ID).First(&refreshed).Error; err != nil {
-			s.taskService.UpdateTaskError(taskID, err)
-			return
-		}
-		if refreshed.FinalContent == nil || strings.TrimSpace(*refreshed.FinalContent) == "" {
-			s.processFinalize(taskID+"_final_"+strconv.Itoa(chapter.ChapterNumber), novelID, chapter.ChapterNumber, model)
-		}
+		s.processFinalize(taskID+"_final_"+strconv.Itoa(chapter.ChapterNumber), novelID, chapter.ChapterNumber, model)
 	}
 	if err := s.db.Model(&models.Novel{}).Where("id = ?", novelID).Updates(map[string]interface{}{
 		"status":          "completed",
@@ -668,4 +639,28 @@ func sanitizeFileName(name string) string {
 		return "novel"
 	}
 	return result
+}
+
+func (s *NovelService) getPreviousChapterTail(novelID uint, chapterNumber int, maxRunes int) string {
+	if chapterNumber <= 1 {
+		return ""
+	}
+	var prev models.NovelChapter
+	if err := s.db.Where("novel_id = ? AND chapter_number = ?", novelID, chapterNumber-1).First(&prev).Error; err != nil {
+		return ""
+	}
+	content := ""
+	if prev.FinalContent != nil && strings.TrimSpace(*prev.FinalContent) != "" {
+		content = strings.TrimSpace(*prev.FinalContent)
+	} else if prev.DraftContent != nil {
+		content = strings.TrimSpace(*prev.DraftContent)
+	}
+	if content == "" {
+		return ""
+	}
+	runes := []rune(content)
+	if len(runes) <= maxRunes {
+		return content
+	}
+	return string(runes[len(runes)-maxRunes:])
 }

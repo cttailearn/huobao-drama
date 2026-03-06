@@ -2269,6 +2269,9 @@ const defaultModelCapabilities: Record<
 
 // 从模型名称提取provider
 const extractProviderFromModel = (modelName: string): string => {
+  if (modelName.toLowerCase() === "comfyui") {
+    return "comfyui";
+  }
   if (modelName.startsWith("doubao-") || modelName.startsWith("seedance")) {
     return "doubao";
   }
@@ -2307,6 +2310,15 @@ const loadVideoModels = async () => {
     // 展开模型列表并去重
     const allModels = activeConfigs
       .flatMap((config) => {
+        if (config.provider === "comfyui" && (!config.model || config.model.length === 0)) {
+          return [
+            {
+              modelName: "comfyui",
+              configName: config.name,
+              priority: config.priority || 0,
+            },
+          ];
+        }
         const models = Array.isArray(config.model)
           ? config.model
           : [config.model];

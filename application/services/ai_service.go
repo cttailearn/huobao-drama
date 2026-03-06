@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -67,6 +68,11 @@ func (s *AIService) CreateConfig(req *CreateAIConfigRequest) (*models.AIServiceC
 	}
 	if req.Provider != "comfyui" && len(req.Model) == 0 {
 		return nil, fmt.Errorf("model is required for provider %s", req.Provider)
+	}
+	if req.Provider == "comfyui" && (req.ServiceType == "image" || req.ServiceType == "video") {
+		if err := validateComfySettings(req.Settings); err != nil {
+			return nil, err
+		}
 	}
 	// 根据 provider 和 service_type 自动设置 endpoint
 	endpoint := req.Endpoint
@@ -353,6 +359,38 @@ func (s *AIService) TestConnection(req *TestConnectionRequest) error {
 	return err
 }
 
+func validateComfySettings(settings string) error {
+	if strings.TrimSpace(settings) == "" {
+		return fmt.Errorf("comfyui settings is empty, expected workflow_json")
+	}
+	var raw map[string]interface{}
+	if err := json.Unmarshal([]byte(settings), &raw); err != nil {
+		return fmt.Errorf("invalid comfyui settings JSON: %w", err)
+	}
+	workflowRaw, hasWorkflow := raw["workflow_json"]
+	if !hasWorkflow {
+		workflowRaw = raw
+	}
+	switch v := workflowRaw.(type) {
+	case string:
+		trimmed := strings.TrimSpace(v)
+		if trimmed == "" {
+			return fmt.Errorf("comfyui workflow_json is empty")
+		}
+		var parsed map[string]interface{}
+		if err := json.Unmarshal([]byte(trimmed), &parsed); err != nil {
+			return fmt.Errorf("invalid comfyui workflow_json string: %w", err)
+		}
+	case map[string]interface{}:
+		if len(v) == 0 {
+			return fmt.Errorf("comfyui workflow_json is empty")
+		}
+	default:
+		return fmt.Errorf("unsupported workflow_json type")
+	}
+	return nil
+}
+
 func (s *AIService) GetDefaultConfig(serviceType string) (*models.AIServiceConfig, error) {
 	var config models.AIServiceConfig
 	// 按优先级降序获取第一个激活的配置
@@ -385,6 +423,15 @@ func (s *AIService) GetConfigForModel(serviceType string, modelName string) (*mo
 	for _, config := range configs {
 		for _, model := range config.Model {
 			if model == modelName {
+				return &config, nil
+			}
+		}
+	}
+
+	normalizedModelName := strings.ToLower(strings.TrimSpace(modelName))
+	if normalizedModelName != "" {
+		for _, config := range configs {
+			if strings.ToLower(strings.TrimSpace(config.Provider)) == normalizedModelName {
 				return &config, nil
 			}
 		}

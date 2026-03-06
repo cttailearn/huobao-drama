@@ -207,48 +207,24 @@ func cloneComfyVideoWorkflow(src map[string]interface{}) map[string]interface{} 
 func mutateWorkflowForVideo(node interface{}, prompt string, imageURL string, model string, options *VideoOptions) {
 	switch v := node.(type) {
 	case map[string]interface{}:
+		classType, _ := v["class_type"].(string)
+		title := extractComfyVideoNodeTitle(v)
+		if inputsRaw, ok := v["inputs"]; ok {
+			if inputs, ok := inputsRaw.(map[string]interface{}); ok {
+				applyComfyVideoInputs(inputs, classType, title, prompt, imageURL, model, options)
+			}
+		}
 		for key, value := range v {
-			switch key {
-			case "prompt", "prompt_text":
-				if _, ok := value.(string); ok {
-					v[key] = prompt
-				}
-			case "image", "image_url", "prompt_image", "first_frame", "first_frame_image":
-				if imageURL != "" {
-					v[key] = imageURL
-				}
-			case "last_frame", "last_frame_image":
-				if options.LastFrameURL != "" {
-					v[key] = options.LastFrameURL
-				}
-			case "model":
+			if strVal, ok := value.(string); ok {
+				replaced := strings.ReplaceAll(strVal, "{{prompt}}", prompt)
+				replaced = strings.ReplaceAll(replaced, "{{image_url}}", imageURL)
 				if model != "" {
-					v[key] = model
+					replaced = strings.ReplaceAll(replaced, "{{model}}", model)
 				}
-			case "seed":
-				if options.Seed > 0 {
-					v[key] = options.Seed
-				}
-			case "duration":
 				if options.Duration > 0 {
-					v[key] = options.Duration
+					replaced = strings.ReplaceAll(replaced, "{{duration}}", strconv.Itoa(options.Duration))
 				}
-			case "fps":
-				if options.FPS > 0 {
-					v[key] = options.FPS
-				}
-			default:
-				if strVal, ok := value.(string); ok {
-					replaced := strings.ReplaceAll(strVal, "{{prompt}}", prompt)
-					replaced = strings.ReplaceAll(replaced, "{{image_url}}", imageURL)
-					if model != "" {
-						replaced = strings.ReplaceAll(replaced, "{{model}}", model)
-					}
-					if options.Duration > 0 {
-						replaced = strings.ReplaceAll(replaced, "{{duration}}", strconv.Itoa(options.Duration))
-					}
-					v[key] = replaced
-				}
+				v[key] = replaced
 			}
 			mutateWorkflowForVideo(v[key], prompt, imageURL, model, options)
 		}
@@ -257,6 +233,78 @@ func mutateWorkflowForVideo(node interface{}, prompt string, imageURL string, mo
 			mutateWorkflowForVideo(v[i], prompt, imageURL, model, options)
 		}
 	}
+}
+
+func applyComfyVideoInputs(inputs map[string]interface{}, classType string, title string, prompt string, imageURL string, model string, options *VideoOptions) {
+	lowerTitle := strings.ToLower(title)
+	lowerClass := strings.ToLower(classType)
+	for key, value := range inputs {
+		switch key {
+		case "seed":
+			if options.Seed > 0 {
+				inputs[key] = options.Seed
+			}
+		case "duration":
+			if options.Duration > 0 {
+				inputs[key] = options.Duration
+			}
+		case "fps":
+			if options.FPS > 0 {
+				inputs[key] = options.FPS
+			}
+		case "image", "image_url", "prompt_image", "first_frame", "first_frame_image":
+			if imageURL != "" {
+				if _, ok := value.(string); ok {
+					inputs[key] = imageURL
+				}
+			}
+		case "last_frame", "last_frame_image":
+			if options.LastFrameURL != "" {
+				if _, ok := value.(string); ok {
+					inputs[key] = options.LastFrameURL
+				}
+			}
+		case "value":
+			if strings.Contains(lowerClass, "primitivestring") {
+				if _, ok := value.(string); ok {
+					inputs[key] = prompt
+				}
+			}
+		case "text", "prompt", "prompt_text":
+			if _, ok := value.(string); ok {
+				if strings.Contains(lowerTitle, "negative") {
+					continue
+				}
+				if strings.Contains(lowerClass, "cliptextencode") || strings.Contains(lowerClass, "text") || key != "text" {
+					inputs[key] = prompt
+				}
+			}
+		}
+		if strVal, ok := value.(string); ok {
+			replaced := strings.ReplaceAll(strVal, "{{prompt}}", prompt)
+			replaced = strings.ReplaceAll(replaced, "{{image_url}}", imageURL)
+			if model != "" {
+				replaced = strings.ReplaceAll(replaced, "{{model}}", model)
+			}
+			if options.Duration > 0 {
+				replaced = strings.ReplaceAll(replaced, "{{duration}}", strconv.Itoa(options.Duration))
+			}
+			inputs[key] = replaced
+		}
+	}
+}
+
+func extractComfyVideoNodeTitle(node map[string]interface{}) string {
+	metaRaw, ok := node["_meta"]
+	if !ok {
+		return ""
+	}
+	meta, ok := metaRaw.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+	title, _ := meta["title"].(string)
+	return title
 }
 
 func extractComfyVideoViewURL(baseURL string, entry map[string]interface{}) string {

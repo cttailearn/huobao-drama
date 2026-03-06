@@ -1395,6 +1395,16 @@ const loadAIConfigs = async () => {
 
     const allImageModels = activeImageList
       .flatMap((config) => {
+        if (config.provider === "comfyui" && (!config.model || config.model.length === 0)) {
+          return [
+            {
+              modelName: "comfyui",
+              configName: config.name,
+              configId: config.id,
+              priority: config.priority || 0,
+            },
+          ];
+        }
         const models = Array.isArray(config.model)
           ? config.model
           : [config.model];

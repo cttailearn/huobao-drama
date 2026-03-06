@@ -207,41 +207,26 @@ func cloneWorkflow(src map[string]interface{}) map[string]interface{} {
 func mutateWorkflowForImage(node interface{}, prompt string, model string, options *ImageOptions) {
 	switch v := node.(type) {
 	case map[string]interface{}:
+		classType, _ := v["class_type"].(string)
+		title := extractComfyNodeTitle(v)
+		if inputsRaw, ok := v["inputs"]; ok {
+			if inputs, ok := inputsRaw.(map[string]interface{}); ok {
+				applyComfyImageInputs(inputs, classType, title, prompt, model, options)
+			}
+		}
 		for key, value := range v {
-			switch key {
-			case "prompt", "prompt_text":
-				if _, ok := value.(string); ok {
-					v[key] = prompt
-				}
-			case "model":
+			if strVal, ok := value.(string); ok {
+				replaced := strings.ReplaceAll(strVal, "{{prompt}}", prompt)
 				if model != "" {
-					v[key] = model
+					replaced = strings.ReplaceAll(replaced, "{{model}}", model)
 				}
-			case "width":
 				if options.Width > 0 {
-					v[key] = options.Width
+					replaced = strings.ReplaceAll(replaced, "{{width}}", strconv.Itoa(options.Width))
 				}
-			case "height":
 				if options.Height > 0 {
-					v[key] = options.Height
+					replaced = strings.ReplaceAll(replaced, "{{height}}", strconv.Itoa(options.Height))
 				}
-			case "seed":
-				if options.Seed > 0 {
-					v[key] = options.Seed
-				}
-			default:
-				if strVal, ok := value.(string); ok {
-					v[key] = strings.ReplaceAll(strVal, "{{prompt}}", prompt)
-					if model != "" {
-						v[key] = strings.ReplaceAll(v[key].(string), "{{model}}", model)
-					}
-					if options.Width > 0 {
-						v[key] = strings.ReplaceAll(v[key].(string), "{{width}}", strconv.Itoa(options.Width))
-					}
-					if options.Height > 0 {
-						v[key] = strings.ReplaceAll(v[key].(string), "{{height}}", strconv.Itoa(options.Height))
-					}
-				}
+				v[key] = replaced
 			}
 			mutateWorkflowForImage(v[key], prompt, model, options)
 		}
@@ -250,6 +235,68 @@ func mutateWorkflowForImage(node interface{}, prompt string, model string, optio
 			mutateWorkflowForImage(v[i], prompt, model, options)
 		}
 	}
+}
+
+func applyComfyImageInputs(inputs map[string]interface{}, classType string, title string, prompt string, model string, options *ImageOptions) {
+	lowerTitle := strings.ToLower(title)
+	lowerClass := strings.ToLower(classType)
+	for key, value := range inputs {
+		switch key {
+		case "width":
+			if options.Width > 0 {
+				inputs[key] = options.Width
+			}
+		case "height":
+			if options.Height > 0 {
+				inputs[key] = options.Height
+			}
+		case "seed":
+			if options.Seed > 0 {
+				inputs[key] = options.Seed
+			}
+		case "value":
+			if strings.Contains(lowerClass, "primitivestring") {
+				if _, ok := value.(string); ok {
+					inputs[key] = prompt
+				}
+			}
+		case "text":
+			if _, ok := value.(string); ok {
+				if strings.Contains(lowerTitle, "negative") {
+					continue
+				}
+				if strings.Contains(lowerClass, "cliptextencode") || strings.Contains(lowerClass, "text") {
+					inputs[key] = prompt
+				}
+			}
+		}
+		if strVal, ok := value.(string); ok {
+			replaced := strings.ReplaceAll(strVal, "{{prompt}}", prompt)
+			if model != "" {
+				replaced = strings.ReplaceAll(replaced, "{{model}}", model)
+			}
+			if options.Width > 0 {
+				replaced = strings.ReplaceAll(replaced, "{{width}}", strconv.Itoa(options.Width))
+			}
+			if options.Height > 0 {
+				replaced = strings.ReplaceAll(replaced, "{{height}}", strconv.Itoa(options.Height))
+			}
+			inputs[key] = replaced
+		}
+	}
+}
+
+func extractComfyNodeTitle(node map[string]interface{}) string {
+	metaRaw, ok := node["_meta"]
+	if !ok {
+		return ""
+	}
+	meta, ok := metaRaw.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+	title, _ := meta["title"].(string)
+	return title
 }
 
 func extractComfyViewURL(baseURL string, entry map[string]interface{}, mediaKey string) string {

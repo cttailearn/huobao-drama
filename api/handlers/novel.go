@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/drama-generator/backend/application/services"
 	"github.com/drama-generator/backend/pkg/config"
@@ -210,7 +213,9 @@ func (h *NovelHandler) ExportTXT(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Type", "text/plain; charset=utf-8")
-	c.Header("Content-Disposition", `attachment; filename="`+fileName+`"`)
+	encodedFileName := url.QueryEscape(fileName)
+	encodedFileName = strings.ReplaceAll(encodedFileName, "+", "%20")
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="novel.txt"; filename*=UTF-8''%s`, encodedFileName))
 	c.String(http.StatusOK, content)
 }
 

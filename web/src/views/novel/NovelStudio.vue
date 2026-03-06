@@ -98,6 +98,7 @@
                 />
               </el-select>
               <el-button type="warning" :loading="actionLoading === 'draft'" @click="handleGenerateDraft">第三步 生成具体内容</el-button>
+              <el-button type="warning" plain :loading="actionLoading === 'all'" @click="handleGenerateAllDraft">生成所有章节内容</el-button>
               <el-button type="success" :loading="saveLoading || chapterSaveLoading" @click="handleStep4Save">第四步 修改保存</el-button>
             </div>
 
@@ -491,6 +492,18 @@ const handleGenerateDraft = async () => {
   }
 }
 
+const handleGenerateAllDraft = async () => {
+  if (!selectedNovelId.value) return
+  actionLoading.value = 'all'
+  try {
+    const res = await novelAPI.generateAll(selectedNovelId.value)
+    await startPollingTask(res.task_id, 'all')
+  } catch (error: any) {
+    actionLoading.value = ''
+    ElMessage.error(error.message || '生成全部章节内容失败')
+  }
+}
+
 const handleApplyToDrama = async () => {
   if (!selectedNovelId.value || !selectedDramaId.value) return
   try {
@@ -510,9 +523,13 @@ const downloadTxt = async () => {
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     const disposition = res.headers.get('Content-Disposition') || ''
-    const match = disposition.match(/filename="(.+)"/)
+    const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+    const normalMatch = disposition.match(/filename="(.+?)"/i)
+    const fileName = utf8Match?.[1]
+      ? decodeURIComponent(utf8Match[1])
+      : (normalMatch?.[1] || 'novel.txt')
     link.href = url
-    link.download = match?.[1] || 'novel.txt'
+    link.download = fileName
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
