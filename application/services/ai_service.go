@@ -62,6 +62,21 @@ type TestConnectionRequest struct {
 	Endpoint string            `json:"endpoint"`
 }
 
+type ValidateWorkflowRequest struct {
+	Provider    string `json:"provider" binding:"required"`
+	ServiceType string `json:"service_type" binding:"required,oneof=image video"`
+	Settings    string `json:"settings" binding:"required"`
+}
+
+type ValidateWorkflowResult struct {
+	Valid               bool     `json:"valid"`
+	PromptNodeCount     int      `json:"prompt_node_count"`
+	OutputNodeCount     int      `json:"output_node_count"`
+	PromptNodeHints     []string `json:"prompt_node_hints"`
+	OutputNodeHints     []string `json:"output_node_hints"`
+	MissingRequirements []string `json:"missing_requirements"`
+}
+
 func (s *AIService) CreateConfig(req *CreateAIConfigRequest) (*models.AIServiceConfig, error) {
 	if req.Provider != "comfyui" && strings.TrimSpace(req.APIKey) == "" {
 		return nil, fmt.Errorf("api_key is required for provider %s", req.Provider)
@@ -259,6 +274,15 @@ func (s *AIService) UpdateConfig(configID uint, req *UpdateAIConfigRequest) (*mo
 	// 允许清空query_endpoint，所以不检查是否为空
 	updates["query_endpoint"] = req.QueryEndpoint
 	if req.Settings != "" {
+		targetProvider := config.Provider
+		if req.Provider != "" {
+			targetProvider = req.Provider
+		}
+		if targetProvider == "comfyui" && (config.ServiceType == "image" || config.ServiceType == "video") {
+			if err := validateComfySettings(req.Settings); err != nil {
+				return nil, err
+			}
+		}
 		updates["settings"] = req.Settings
 	}
 	updates["is_default"] = req.IsDefault
@@ -360,12 +384,17 @@ func (s *AIService) TestConnection(req *TestConnectionRequest) error {
 }
 
 func validateComfySettings(settings string) error {
+	_, err := parseComfyWorkflowSettings(settings)
+	return err
+}
+
+func parseComfyWorkflowSettings(settings string) (map[string]interface{}, error) {
 	if strings.TrimSpace(settings) == "" {
-		return fmt.Errorf("comfyui settings is empty, expected workflow_json")
+		return nil, fmt.Errorf("comfyui settings is empty, expected workflow_json")
 	}
 	var raw map[string]interface{}
 	if err := json.Unmarshal([]byte(settings), &raw); err != nil {
-		return fmt.Errorf("invalid comfyui settings JSON: %w", err)
+		return nil, fmt.Errorf("invalid comfyui settings JSON: %w", err)
 	}
 	workflowRaw, hasWorkflow := raw["workflow_json"]
 	if !hasWorkflow {
@@ -375,20 +404,159 @@ func validateComfySettings(settings string) error {
 	case string:
 		trimmed := strings.TrimSpace(v)
 		if trimmed == "" {
-			return fmt.Errorf("comfyui workflow_json is empty")
+			return nil, fmt.Errorf("comfyui workflow_json is empty")
 		}
 		var parsed map[string]interface{}
 		if err := json.Unmarshal([]byte(trimmed), &parsed); err != nil {
-			return fmt.Errorf("invalid comfyui workflow_json string: %w", err)
+			return nil, fmt.Errorf("invalid comfyui workflow_json string: %w", err)
 		}
+		if len(parsed) == 0 {
+			return nil, fmt.Errorf("comfyui workflow_json is empty")
+		}
+		return parsed, nil
 	case map[string]interface{}:
 		if len(v) == 0 {
-			return fmt.Errorf("comfyui workflow_json is empty")
+			return nil, fmt.Errorf("comfyui workflow_json is empty")
 		}
+		return v, nil
 	default:
-		return fmt.Errorf("unsupported workflow_json type")
+		return nil, fmt.Errorf("unsupported workflow_json type")
 	}
-	return nil
+}
+
+func (s *AIService) ValidateWorkflow(req *ValidateWorkflowRequest) (*ValidateWorkflowResult, error) {
+	if strings.TrimSpace(req.Provider) != "comfyui" {
+		return nil, fmt.Errorf("当前仅支持 ComfyUI 工作流自检")
+	}
+	workflow, err := parseComfyWorkflowSettings(req.Settings)
+	if err != nil {
+		return nil, err
+	}
+	result := &ValidateWorkflowResult{
+		Valid:               true,
+		PromptNodeHints:     make([]string, 0),
+		OutputNodeHints:     make([]string, 0),
+		MissingRequirements: make([]string, 0),
+	}
+	for _, nodeRaw := range workflow {
+		node, ok := nodeRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		classType := strings.ToLower(strings.TrimSpace(getComfyNodeClassType(node)))
+		title := strings.ToLower(strings.TrimSpace(getComfyNodeTitle(node)))
+		inputs := getComfyNodeInputs(node)
+
+		if hasWritablePromptInput(inputs, classType, title) {
+			result.PromptNodeCount++
+			result.PromptNodeHints = append(result.PromptNodeHints, getComfyNodeHint(node, classType))
+		}
+		if req.ServiceType == "image" && isComfyImageOutputNode(classType, title, inputs) {
+			result.OutputNodeCount++
+			result.OutputNodeHints = append(result.OutputNodeHints, getComfyNodeHint(node, classType))
+		}
+		if req.ServiceType == "video" && isComfyVideoOutputNode(classType, title, inputs) {
+			result.OutputNodeCount++
+			result.OutputNodeHints = append(result.OutputNodeHints, getComfyNodeHint(node, classType))
+		}
+	}
+	if result.PromptNodeCount == 0 {
+		result.Valid = false
+		result.MissingRequirements = append(result.MissingRequirements, "未找到可写提示词节点（如 CLIPTextEncode.text 或 PrimitiveStringMultiline.value）")
+	}
+	if result.OutputNodeCount == 0 {
+		result.Valid = false
+		if req.ServiceType == "image" {
+			result.MissingRequirements = append(result.MissingRequirements, "未找到图片输出节点（如 SaveImage/PreviewImage 或输出 images）")
+		} else {
+			result.MissingRequirements = append(result.MissingRequirements, "未找到视频输出节点（如 VHS_VideoCombine/SaveVideo 或输出 videos）")
+		}
+	}
+	return result, nil
+}
+
+func getComfyNodeClassType(node map[string]interface{}) string {
+	classType, _ := node["class_type"].(string)
+	return classType
+}
+
+func getComfyNodeTitle(node map[string]interface{}) string {
+	metaRaw, ok := node["_meta"]
+	if !ok {
+		return ""
+	}
+	meta, ok := metaRaw.(map[string]interface{})
+	if !ok {
+		return ""
+	}
+	title, _ := meta["title"].(string)
+	return title
+}
+
+func getComfyNodeInputs(node map[string]interface{}) map[string]interface{} {
+	inputsRaw, ok := node["inputs"]
+	if !ok {
+		return map[string]interface{}{}
+	}
+	inputs, ok := inputsRaw.(map[string]interface{})
+	if !ok {
+		return map[string]interface{}{}
+	}
+	return inputs
+}
+
+func hasWritablePromptInput(inputs map[string]interface{}, classType string, title string) bool {
+	if strings.Contains(title, "negative") {
+		return false
+	}
+	if value, ok := inputs["text"]; ok {
+		if _, isString := value.(string); isString {
+			return strings.Contains(classType, "cliptextencode") || strings.Contains(classType, "text")
+		}
+	}
+	if value, ok := inputs["value"]; ok {
+		if _, isString := value.(string); isString && strings.Contains(classType, "primitivestring") {
+			return true
+		}
+	}
+	return false
+}
+
+func isComfyImageOutputNode(classType string, title string, inputs map[string]interface{}) bool {
+	if strings.Contains(classType, "saveimage") || strings.Contains(classType, "previewimage") {
+		return true
+	}
+	if strings.Contains(title, "saveimage") || strings.Contains(title, "previewimage") {
+		return true
+	}
+	_, hasImages := inputs["images"]
+	return hasImages
+}
+
+func isComfyVideoOutputNode(classType string, title string, inputs map[string]interface{}) bool {
+	if strings.Contains(classType, "video") || strings.Contains(classType, "savevideo") || strings.Contains(classType, "vhs_videocombine") {
+		return true
+	}
+	if strings.Contains(title, "video") || strings.Contains(title, "save video") {
+		return true
+	}
+	_, hasVideos := inputs["videos"]
+	return hasVideos
+}
+
+func getComfyNodeHint(node map[string]interface{}, classType string) string {
+	nodeID, _ := node["id"].(string)
+	title := getComfyNodeTitle(node)
+	if title != "" {
+		if nodeID != "" {
+			return fmt.Sprintf("%s (%s)", title, nodeID)
+		}
+		return title
+	}
+	if nodeID != "" {
+		return fmt.Sprintf("%s (%s)", classType, nodeID)
+	}
+	return classType
 }
 
 func (s *AIService) GetDefaultConfig(serviceType string) (*models.AIServiceConfig, error) {

@@ -177,6 +177,17 @@
           <div class="form-tip">
             支持导入 ComfyUI API 工作流 JSON 文件，URL 使用 Base URL（如 http://127.0.0.1:8188）
           </div>
+          <div class="workflow-actions">
+            <el-button
+              size="small"
+              type="warning"
+              plain
+              :loading="checkingWorkflow"
+              @click="validateWorkflowBeforeSave"
+            >
+              工作流自检
+            </el-button>
+          </div>
         </el-form-item>
 
         <el-form-item v-if="isEdit" :label="$t('aiConfig.form.isActive')">
@@ -250,6 +261,7 @@ const editingId = ref<number>();
 const formRef = ref<FormInstance>();
 const submitting = ref(false);
 const testing = ref(false);
+const checkingWorkflow = ref(false);
 
 const form = reactive<
   CreateAIConfigRequest & { is_active?: boolean; provider?: string }
@@ -600,6 +612,10 @@ const handleSubmit = async () => {
 
   await formRef.value.validate(async (valid) => {
     if (!valid) return;
+    if (form.provider === "comfyui" && (form.service_type === "image" || form.service_type === "video")) {
+      const passed = await validateWorkflowBeforeSave();
+      if (!passed) return;
+    }
 
     submitting.value = true;
     try {
@@ -630,6 +646,31 @@ const handleSubmit = async () => {
       submitting.value = false;
     }
   });
+};
+
+const validateWorkflowBeforeSave = async () => {
+  if (!(form.provider === "comfyui" && (form.service_type === "image" || form.service_type === "video"))) {
+    return true;
+  }
+  checkingWorkflow.value = true;
+  try {
+    const res = await aiAPI.validateWorkflow({
+      provider: form.provider,
+      service_type: form.service_type,
+      settings: form.settings || "",
+    });
+    if (!res.valid) {
+      ElMessage.error(`工作流自检未通过：${res.missing_requirements.join("；")}`);
+      return false;
+    }
+    ElMessage.success(`工作流自检通过：可写Prompt节点 ${res.prompt_node_count}，输出节点 ${res.output_node_count}`);
+    return true;
+  } catch (error: any) {
+    ElMessage.error(error.message || "工作流自检失败");
+    return false;
+  } finally {
+    checkingWorkflow.value = false;
+  }
 };
 
 const handleTabChange = (tabName: string | number) => {
@@ -768,6 +809,10 @@ watch(visible, (val) => {
 
 .workflow-file-input {
   width: 100%;
+  margin-top: 8px;
+}
+
+.workflow-actions {
   margin-top: 8px;
 }
 

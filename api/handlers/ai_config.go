@@ -32,7 +32,7 @@ func (h *AIConfigHandler) CreateConfig(c *gin.Context) {
 
 	config, err := h.aiService.CreateConfig(&req)
 	if err != nil {
-		response.InternalError(c, "创建失败")
+		response.BadRequest(c, "创建失败: "+err.Error())
 		return
 	}
 
@@ -93,7 +93,7 @@ func (h *AIConfigHandler) UpdateConfig(c *gin.Context) {
 			response.NotFound(c, "配置不存在")
 			return
 		}
-		response.InternalError(c, "更新失败")
+		response.BadRequest(c, "更新失败: "+err.Error())
 		return
 	}
 
@@ -133,4 +133,20 @@ func (h *AIConfigHandler) TestConnection(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{"message": "连接测试成功"})
+}
+
+func (h *AIConfigHandler) ValidateWorkflow(c *gin.Context) {
+	var req services.ValidateWorkflowRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	result, err := h.aiService.ValidateWorkflow(&req)
+	if err != nil {
+		response.BadRequest(c, "工作流自检失败: "+err.Error())
+		return
+	}
+
+	response.Success(c, result)
 }

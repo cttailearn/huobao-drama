@@ -52,6 +52,21 @@ export interface TestConnectionRequest {
   query_endpoint?: string  // 异步查询端点（用于视频等异步任务）
 }
 
+export interface ValidateWorkflowRequest {
+  provider: string
+  service_type: 'image' | 'video'
+  settings: string
+}
+
+export interface ValidateWorkflowResult {
+  valid: boolean
+  prompt_node_count: number
+  output_node_count: number
+  prompt_node_hints: string[]
+  output_node_hints: string[]
+  missing_requirements: string[]
+}
+
 export interface AIServiceProvider {
   id: number
   name: string

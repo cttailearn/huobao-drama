@@ -125,6 +125,17 @@ func (c *ComfyUIImageClient) GetTaskStatus(taskID string) (*ImageResult, error) 
 	}
 	entryRaw, ok := history[taskID]
 	if !ok {
+		if queueState, position, queueErr := c.getQueueState(taskID); queueErr == nil {
+			if queueState == "queued" {
+				return &ImageResult{TaskID: taskID, Status: "queued", Completed: false}, nil
+			}
+			if queueState == "running" {
+				return &ImageResult{TaskID: taskID, Status: "processing", Completed: false}, nil
+			}
+			if queueState == "missing" && position >= 0 {
+				return &ImageResult{TaskID: taskID, Status: "processing", Completed: false}, nil
+			}
+		}
 		return &ImageResult{TaskID: taskID, Status: "processing", Completed: false}, nil
 	}
 	entry, ok := entryRaw.(map[string]interface{})
@@ -149,6 +160,77 @@ func (c *ComfyUIImageClient) GetTaskStatus(taskID string) (*ImageResult, error) 
 		}, nil
 	}
 	return &ImageResult{TaskID: taskID, Status: "processing", Completed: false}, nil
+}
+
+func (c *ComfyUIImageClient) getQueueState(taskID string) (string, int, error) {
+	req, err := http.NewRequest("GET", c.BaseURL+"/queue", nil)
+	if err != nil {
+		return "unknown", -1, fmt.Errorf("create queue request: %w", err)
+	}
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return "unknown", -1, fmt.Errorf("send queue request: %w", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "unknown", -1, fmt.Errorf("read queue response: %w", err)
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "unknown", -1, fmt.Errorf("comfyui queue API error (status %d): %s", resp.StatusCode, string(body))
+	}
+	var queue map[string]interface{}
+	if err := json.Unmarshal(body, &queue); err != nil {
+		return "unknown", -1, fmt.Errorf("parse queue response: %w", err)
+	}
+	if pendingRaw, ok := queue["queue_pending"]; ok {
+		if position := findComfyTaskPosition(pendingRaw, taskID); position >= 0 {
+			return "queued", position, nil
+		}
+	}
+	if runningRaw, ok := queue["queue_running"]; ok {
+		if position := findComfyTaskPosition(runningRaw, taskID); position >= 0 {
+			return "running", position, nil
+		}
+	}
+	return "missing", -1, nil
+}
+
+func findComfyTaskPosition(queueRaw interface{}, taskID string) int {
+	queueItems, ok := queueRaw.([]interface{})
+	if !ok {
+		return -1
+	}
+	for i, item := range queueItems {
+		if extractComfyTaskID(item) == taskID {
+			return i
+		}
+	}
+	return -1
+}
+
+func extractComfyTaskID(item interface{}) string {
+	switch v := item.(type) {
+	case []interface{}:
+		if len(v) > 1 {
+			if id, ok := v[1].(string); ok {
+				return id
+			}
+		}
+		if len(v) > 0 {
+			if id, ok := v[0].(string); ok {
+				return id
+			}
+		}
+	case map[string]interface{}:
+		if id, ok := v["prompt_id"].(string); ok {
+			return id
+		}
+		if id, ok := v["id"].(string); ok {
+			return id
+		}
+	}
+	return ""
 }
 
 func parseComfyWorkflowSettings(settings string) (map[string]interface{}, string, error) {

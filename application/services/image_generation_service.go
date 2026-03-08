@@ -309,7 +309,7 @@ func (s *ImageGenerationService) ProcessImageGeneration(imageGenID uint) {
 }
 
 func (s *ImageGenerationService) pollTaskStatus(imageGenID uint, client image.ImageClient, taskID string) {
-	maxAttempts := 60
+	maxAttempts := 360
 	pollInterval := 5 * time.Second
 
 	for i := 0; i < maxAttempts; i++ {

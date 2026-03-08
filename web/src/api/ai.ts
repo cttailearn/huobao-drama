@@ -3,7 +3,9 @@ import type {
     AIServiceType,
     CreateAIConfigRequest,
     TestConnectionRequest,
-    UpdateAIConfigRequest
+    UpdateAIConfigRequest,
+    ValidateWorkflowRequest,
+    ValidateWorkflowResult
 } from '../types/ai'
 import request from '../utils/request'
 
@@ -32,5 +34,9 @@ export const aiAPI = {
 
   testConnection(data: TestConnectionRequest) {
     return request.post('/ai-configs/test', data)
+  },
+
+  validateWorkflow(data: ValidateWorkflowRequest) {
+    return request.post<ValidateWorkflowResult>('/ai-configs/validate-workflow', data)
   }
 }
