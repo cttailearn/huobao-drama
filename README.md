@@ -20,10 +20,6 @@
 
 XingYue Studio is an AI-powered content production platform that supports novel generation and short drama production, automating the workflow from novel planning, script generation, character design, storyboarding to video composition.
 
-火宝短剧商业版地址：[火宝短剧商业版](https://drama.chatfire.site/shortvideo)
-
-火宝小说生成：[火宝小说生成](https://marketing.chatfire.site/huobao-novel/)
-
 ### 🎯 Core Features
 
 - **🤖 AI-Driven**: Parse scripts using large language models to extract characters, scenes, and storyboards
